@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
-import { useGaleria, GaleriaItem } from '@/hooks/useSeries';
+import { useGaleria } from '@/hooks/useSeries';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { SkeletonGallery } from '@/components/ui/skeleton-card';
 import { Button } from '@/components/ui/button';
@@ -79,13 +79,13 @@ export function GalleryMosaic({ seriesId, isActive = true }: GalleryMosaicProps)
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.05 }}
               onClick={() => openLightbox(index)}
-              className="group aspect-square rounded-lg overflow-hidden bg-card border border-border hover:border-muted-foreground/30 transition-all duration-300"
+              className="group aspect-square rounded-lg overflow-hidden bg-card border border-border hover:border-muted-foreground/30 transition-all duration-300 relative"
             >
               <OptimizedImage
                 src={image.imagen_url}
                 alt={image.titulo || 'Gallery image'}
                 size="gallery"
-                className="w-full h-full group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
             </motion.button>
           ))}
@@ -112,37 +112,37 @@ export function GalleryMosaic({ seriesId, isActive = true }: GalleryMosaicProps)
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="lightbox-overlay"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm p-4"
             onClick={closeLightbox}
           >
             <button
-              className="absolute top-4 right-4 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors z-10"
+              className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-50"
               onClick={closeLightbox}
               aria-label="Close lightbox"
             >
-              <X className="w-6 h-6" />
+              <X className="w-8 h-8" />
             </button>
 
             <button
-              className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors z-10"
+              className="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-50 hidden md:flex"
               onClick={(e) => {
                 e.stopPropagation();
                 navigateLightbox('prev');
               }}
               aria-label="Previous image"
             >
-              <ChevronLeft className="w-6 h-6" />
+              <ChevronLeft className="w-8 h-8" />
             </button>
 
             <button
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors z-10"
+              className="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-50 hidden md:flex"
               onClick={(e) => {
                 e.stopPropagation();
                 navigateLightbox('next');
               }}
               aria-label="Next image"
             >
-              <ChevronRight className="w-6 h-6" />
+              <ChevronRight className="w-8 h-8" />
             </button>
 
             <motion.img
@@ -152,15 +152,12 @@ export function GalleryMosaic({ seriesId, isActive = true }: GalleryMosaicProps)
               exit={{ opacity: 0, scale: 0.9 }}
               src={optimizeCloudinaryUrl(images[lightboxIndex].imagen_url, { size: 'full' })}
               alt={images[lightboxIndex].titulo || 'Gallery image'}
-              className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg"
+              className="max-w-full max-h-[85vh] w-auto h-auto object-contain rounded-lg shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             />
-
-            {images[lightboxIndex].titulo && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-background/80 rounded-lg">
-                <p className="text-sm font-medium">{images[lightboxIndex].titulo}</p>
-              </div>
-            )}
+            
+            {/* Aquí borré el bloque que mostraba el título */}
+            
           </motion.div>
         )}
       </AnimatePresence>
