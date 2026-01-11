@@ -1,0 +1,286 @@
+/* Bayekverse Design System - Cinematic Dark Theme */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+@layer base {
+  :root {
+    /* Core Dark Theme */
+    --background: 0 0% 2%;
+    --foreground: 0 0% 95%;
+
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 95%;
+
+    /* Metallic Silver Primary */
+    --primary: 0 0% 85%;
+    --primary-foreground: 0 0% 5%;
+
+    /* Subtle Gray Secondary */
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 85%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 55%;
+
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 95%;
+
+    /* Destructive Red with Glow */
+    --destructive: 0 85% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 15%;
+    --input: 0 0% 12%;
+    --ring: 0 0% 40%;
+
+    --radius: 0.75rem;
+
+    /* Custom Bayekverse Colors */
+    --glow-red: 0 100% 50%;
+    --glow-red-dim: 0 80% 35%;
+    --metallic-silver: 220 10% 75%;
+    --metallic-dark: 220 10% 25%;
+    --deep-black: 0 0% 2%;
+    --surface-elevated: 0 0% 8%;
+    --surface-hover: 0 0% 12%;
+    
+    /* Gradients */
+    --gradient-dark: linear-gradient(180deg, hsl(0, 0%, 5%) 0%, hsl(0, 0%, 2%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0, 0%, 8%) 0%, hsl(0, 0%, 4%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(0, 100%, 50%, 0.15) 0%, transparent 70%);
+    --gradient-metallic: linear-gradient(135deg, hsl(220, 10%, 80%) 0%, hsl(220, 10%, 50%) 50%, hsl(220, 10%, 30%) 100%);
+
+    /* Sidebar (for admin) */
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 0 0% 90%;
+    --sidebar-primary-foreground: 0 0% 5%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 0 0% 12%;
+    --sidebar-ring: 0 0% 40%;
+  }
+
+  .dark {
+    /* Already dark theme */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+  }
+}
+
+@layer components {
+  /* Glow Effects */
+  .glow-red {
+    box-shadow: 0 0 20px hsl(var(--glow-red) / 0.5),
+                0 0 40px hsl(var(--glow-red) / 0.3),
+                0 0 60px hsl(var(--glow-red) / 0.1);
+  }
+
+  .glow-red-pulse {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 15px hsl(var(--glow-red) / 0.4),
+                  0 0 30px hsl(var(--glow-red) / 0.2);
+    }
+    50% {
+      box-shadow: 0 0 25px hsl(var(--glow-red) / 0.6),
+                  0 0 50px hsl(var(--glow-red) / 0.3);
+    }
+  }
+
+  .text-glow {
+    text-shadow: 0 0 10px hsl(var(--glow-red) / 0.5),
+                 0 0 20px hsl(var(--glow-red) / 0.3);
+  }
+
+  /* Card Styles */
+  .card-cinematic {
+    @apply relative overflow-hidden rounded-lg bg-card border border-border;
+    background: var(--gradient-card);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-cinematic::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-500;
+    background: linear-gradient(180deg, transparent 60%, hsl(var(--glow-red) / 0.1) 100%);
+  }
+
+  .card-cinematic:hover {
+    transform: scale(1.03) translateY(-4px);
+    border-color: hsl(var(--muted-foreground) / 0.3);
+  }
+
+  .card-cinematic:hover::before {
+    @apply opacity-100;
+  }
+
+  /* Badge Styles */
+  .badge-emision {
+    @apply px-3 py-1 text-xs font-semibold rounded-full;
+    background: linear-gradient(135deg, hsl(var(--glow-red)) 0%, hsl(var(--glow-red-dim)) 100%);
+    color: white;
+    animation: pulse-glow 2.5s ease-in-out infinite;
+  }
+
+  .badge-finalizada {
+    @apply px-3 py-1 text-xs font-semibold rounded-full;
+    background: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Skeleton Loading */
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted) / 0.5) 0%,
+      hsl(var(--muted) / 0.8) 50%,
+      hsl(var(--muted) / 0.5) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Video Player Container */
+  .video-container {
+    @apply relative w-full overflow-hidden rounded-lg;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    background: hsl(var(--card));
+  }
+
+  .video-container iframe {
+    @apply absolute inset-0 w-full h-full;
+  }
+
+  /* Tabs Styling */
+  .tab-cinematic {
+    @apply relative px-6 py-3 text-sm font-medium transition-all duration-300;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .tab-cinematic:hover {
+    color: hsl(var(--foreground));
+  }
+
+  .tab-cinematic[data-state="active"] {
+    color: hsl(var(--foreground));
+  }
+
+  .tab-cinematic[data-state="active"]::after {
+    content: '';
+    @apply absolute bottom-0 left-0 right-0 h-0.5;
+    background: linear-gradient(90deg, transparent, hsl(var(--primary)), transparent);
+  }
+
+  /* Lightbox Overlay */
+  .lightbox-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center;
+    background: hsl(var(--deep-black) / 0.95);
+    backdrop-filter: blur(8px);
+  }
+
+  /* Scrollbar Styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+
+  /* Markdown Content Styling */
+  .prose-lore h1, .prose-lore h2, .prose-lore h3 {
+    @apply font-bold tracking-tight mb-4;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  .prose-lore p {
+    @apply text-muted-foreground leading-relaxed mb-4;
+  }
+
+  .prose-lore a {
+    @apply text-primary underline underline-offset-4;
+  }
+
+  .prose-lore ul, .prose-lore ol {
+    @apply pl-6 mb-4 text-muted-foreground;
+  }
+
+  .prose-lore blockquote {
+    @apply border-l-2 border-primary pl-4 italic;
+  }
+
+  /* Footer Styling */
+  .footer-gradient {
+    background: linear-gradient(180deg, transparent 0%, hsl(var(--card)) 50%);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-gradient-metallic {
+    background: var(--gradient-metallic);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-noise {
+    position: relative;
+  }
+
+  .bg-noise::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+  }
+}
