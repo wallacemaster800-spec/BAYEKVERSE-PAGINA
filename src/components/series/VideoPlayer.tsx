@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { Play } from 'lucide-react';
 import { getYoutubeThumbnail } from '@/lib/cloudinary';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
-import Plyr from "plyr-react"; 
-import "plyr/dist/plyr.css"; 
 
 interface VideoPlayerProps {
   videoId: string;
@@ -18,28 +16,6 @@ export function VideoPlayer({ videoId, title = 'Video' }: VideoPlayerProps) {
 
   const thumbnailUrl = getYoutubeThumbnail(videoId, 'maxres');
 
-  const videoSource: any = {
-    type: "video",
-    sources: [
-      {
-        src: videoId,
-        provider: "youtube",
-      },
-    ],
-  };
-
-  // Opciones estándar de Plyr
-  const plyrOptions = {
-    autoplay: true,
-    youtube: {
-      noCookie: true,
-      rel: 0,
-      showinfo: 1,
-      iv_load_policy: 1,
-      modestbranding: 0 // Muestra el logo de YouTube
-    }
-  };
-
   return (
     <div
       ref={ref}
@@ -51,7 +27,7 @@ export function VideoPlayer({ videoId, title = 'Video' }: VideoPlayerProps) {
             <img
               src={thumbnailUrl}
               alt={title}
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
               loading="lazy"
             />
           )}
@@ -70,12 +46,13 @@ export function VideoPlayer({ videoId, title = 'Video' }: VideoPlayerProps) {
           </button>
         </>
       ) : (
-        <div className="absolute inset-0 w-full h-full z-20">
-          <Plyr 
-            source={videoSource} 
-            options={plyrOptions} 
-          />
-        </div>
+        <iframe
+          src={`https://www.youtube.com/embed/${videoId}?autoplay=1&modestbranding=1&rel=0`}
+          title={title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          className="absolute inset-0 w-full h-full border-0"
+        />
       )}
     </div>
   );
