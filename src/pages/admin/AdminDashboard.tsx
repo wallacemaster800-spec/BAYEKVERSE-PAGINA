@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
-import { Plus, Pencil, Trash2, Eye, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, Loader2, Lock, Unlock } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/hooks/useAuth';
 import { useSeries, useCreateSeries, useDeleteSeries, Series } from '@/hooks/useSeries';
@@ -56,12 +56,15 @@ export default function AdminDashboard() {
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  
+  // 🔥 ESTADO INICIAL CORREGIDO (Incluye es_pago)
   const [formData, setFormData] = useState({
     titulo: '',
     slug: '',
     descripcion: '',
     portada_url: '',
     estado: 'En emisión' as 'En emisión' | 'Finalizada',
+    es_pago: false,
   });
 
   // Redirect if not admin
@@ -103,12 +106,14 @@ export default function AdminDashboard() {
       await createSeries.mutateAsync(formData);
       toast({ title: 'Serie creada con éxito' });
       setIsCreateOpen(false);
+      // 🔥 RESET FORM CORREGIDO
       setFormData({
         titulo: '',
         slug: '',
         descripcion: '',
         portada_url: '',
         estado: 'En emisión',
+        es_pago: false,
       });
     } catch (error) {
       toast({
@@ -149,25 +154,25 @@ export default function AdminDashboard() {
             animate={{ opacity: 1, y: 0 }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
               <div>
                 <h1 className="text-3xl font-display font-bold">Panel de Administración</h1>
                 <p className="text-muted-foreground mt-1">Gestiona tu contenido de Bayekverse</p>
               </div>
-              <Button onClick={() => setIsCreateOpen(true)}>
+              <Button onClick={() => setIsCreateOpen(true)} className="w-fit">
                 <Plus className="w-4 h-4 mr-2" />
                 Nueva Serie
               </Button>
             </div>
 
             {/* Series Table */}
-            <div className="rounded-lg border border-border bg-card">
+            <div className="rounded-lg border border-border bg-card overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Portada</TableHead>
                     <TableHead>Título</TableHead>
-                    <TableHead>Slug</TableHead>
+                    <TableHead>Acceso</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
@@ -181,23 +186,37 @@ export default function AdminDashboard() {
                             <img
                               src={s.portada_url}
                               alt={s.titulo}
-                              className="w-16 h-24 object-cover rounded"
+                              className="w-12 h-16 object-cover rounded shadow-sm"
                             />
                           ) : (
-                            <div className="w-16 h-24 bg-muted rounded flex items-center justify-center text-muted-foreground text-xs">
+                            <div className="w-12 h-16 bg-muted rounded flex items-center justify-center text-muted-foreground text-[10px] text-center p-1">
                               Sin imagen
                             </div>
                           )}
                         </TableCell>
-                        <TableCell className="font-medium">{s.titulo}</TableCell>
-                        <TableCell className="text-muted-foreground">{s.slug}</TableCell>
+                        <TableCell>
+                           <div className="font-medium">{s.titulo}</div>
+                           <div className="text-xs text-muted-foreground">{s.slug}</div>
+                        </TableCell>
+                        <TableCell>
+                          {/* 🔥 BADGE DE ACCESO CORREGIDO */}
+                          {s.es_pago ? (
+                            <Badge variant="outline" className="border-amber-500 text-amber-600 bg-amber-500/5 gap-1">
+                              <Lock className="w-3 h-3" /> Premium
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="border-emerald-500 text-emerald-600 bg-emerald-500/5 gap-1">
+                              <Unlock className="w-3 h-3" /> Gratis
+                            </Badge>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <Badge variant={s.estado === 'En emisión' ? 'default' : 'secondary'}>
                             {s.estado}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-end gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
@@ -219,7 +238,7 @@ export default function AdminDashboard() {
                               size="icon"
                               onClick={() => setDeleteId(s.id)}
                               title="Eliminar serie"
-                              className="text-destructive hover:text-destructive"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -251,65 +270,86 @@ export default function AdminDashboard() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="titulo">Título *</Label>
-              <Input
-                id="titulo"
-                value={formData.titulo}
-                onChange={(e) => {
-                  setFormData({
-                    ...formData,
-                    titulo: e.target.value,
-                    slug: generateSlug(e.target.value),
-                  });
-                }}
-                placeholder="Punto Zero"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2 col-span-2 md:col-span-1">
+                <Label htmlFor="titulo">Título *</Label>
+                <Input
+                  id="titulo"
+                  value={formData.titulo}
+                  onChange={(e) => {
+                    setFormData({
+                      ...formData,
+                      titulo: e.target.value,
+                      slug: generateSlug(e.target.value),
+                    });
+                  }}
+                  placeholder="Ej: Punto Zero"
+                />
+              </div>
+              <div className="space-y-2 col-span-2 md:col-span-1">
+                <Label htmlFor="slug">Slug *</Label>
+                <Input
+                  id="slug"
+                  value={formData.slug}
+                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  placeholder="punto-zero"
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="slug">Slug *</Label>
-              <Input
-                id="slug"
-                value={formData.slug}
-                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                placeholder="punto-zero"
-              />
-            </div>
+
             <div className="space-y-2">
               <Label htmlFor="descripcion">Descripción</Label>
               <Textarea
                 id="descripcion"
                 value={formData.descripcion}
                 onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
-                placeholder="Una breve descripción de la serie..."
+                placeholder="De qué trata esta obra..."
                 rows={3}
               />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="portada">URL de Portada (Cloudinary)</Label>
+              <Label htmlFor="portada">URL de Portada</Label>
               <Input
                 id="portada"
                 value={formData.portada_url}
                 onChange={(e) => setFormData({ ...formData, portada_url: e.target.value })}
-                placeholder="https://res.cloudinary.com/..."
+                placeholder="https://..."
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="estado">Estado</Label>
-              <Select
-                value={formData.estado}
-                onValueChange={(value: 'En emisión' | 'Finalizada') =>
-                  setFormData({ ...formData, estado: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="En emisión">En emisión</SelectItem>
-                  <SelectItem value="Finalizada">Finalizada</SelectItem>
-                </SelectContent>
-              </Select>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="estado">Estado</Label>
+                <Select
+                  value={formData.estado}
+                  onValueChange={(value: 'En emisión' | 'Finalizada') =>
+                    setFormData({ ...formData, estado: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="En emisión">En emisión</SelectItem>
+                    <SelectItem value="Finalizada">Finalizada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* 🔥 CAMPO ES_PAGO INTEGRADO */}
+              <div className="flex items-center space-x-2 pt-8">
+                <input
+                  id="es_pago"
+                  type="checkbox"
+                  className="w-4 h-4 accent-primary cursor-pointer"
+                  checked={formData.es_pago}
+                  onChange={(e) => setFormData({ ...formData, es_pago: e.target.checked })}
+                />
+                <Label htmlFor="es_pago" className="text-sm font-bold cursor-pointer">
+                  ¿Es Serie Premium?
+                </Label>
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -330,8 +370,7 @@ export default function AdminDashboard() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar esta serie?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminarán también todos los capítulos, lore y
-              galería asociados.
+              Esta acción no se puede deshacer. Se eliminarán también todos los capítulos asociados.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
