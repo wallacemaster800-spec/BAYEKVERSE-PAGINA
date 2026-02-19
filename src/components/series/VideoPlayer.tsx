@@ -35,13 +35,12 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
     }
   }, [src, ytId])
 
-  // --- CONTENEDOR BASE ---
-  // Eliminamos 'aspect-video' para que el contenedor sea flexible
-  const containerClass = "relative w-full flex items-center justify-center bg-black rounded-xl overflow-hidden shadow-2xl select-none border border-white/5";
+  // Contenedor que se adapta totalmente
+  const containerClass = "relative w-full flex items-center justify-center bg-black overflow-hidden select-none";
 
   if (ytId) {
     return (
-      <div className={`${containerClass} aspect-video`}>
+      <div className={`${containerClass} aspect-video rounded-xl shadow-2xl`}>
         <iframe
           src={`https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1&showinfo=0`}
           className="absolute top-0 left-0 w-full h-full border-0"
@@ -59,13 +58,13 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
         controls
         playsInline
         poster={poster}
-        /* CLAVE: 
-           - w-full y h-auto en vertical.
-           - max-h-[80vh] para que en horizontal no "rebalse" la pantalla.
-           - object-contain para asegurar que NO se pierda ni un píxel.
+        /* - h-auto en vertical.
+           - landscape:h-[100dvh] fuerza a que toque el borde superior e inferior en horizontal.
+           - object-contain asegura que NO se corte nada de la imagen.
         */
-        className="w-full h-auto max-h-[85vh] md:max-h-[none] object-contain rounded-xl"
+        className="w-full h-auto landscape:h-[100dvh] landscape:w-auto object-contain mx-auto"
         title={title}
+        style={{ backgroundColor: 'black' }}
       />
     </div>
   )
