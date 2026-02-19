@@ -48,7 +48,6 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
         fullscreen: { enabled: true, fallback: true, iosNative: true }
       });
 
-      // Lógica para girar pantalla (Intacta)
       player.on('enterfullscreen', () => {
         if (window.screen.orientation && window.screen.orientation.lock) {
           window.screen.orientation.lock('landscape').catch(() => {});
@@ -102,23 +101,15 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
     .plyr__controls [data-plyr="fast-forward"] { order: 3; margin-left: 5px; }
 
     .plyr--fullscreen-active video {
-      object-fit: contain !important; 
       background-color: black;
     }
 
-    /* --- MOBILE: FULL COVER CON ZOOM INVERSO --- */
+    /* --- MOBILE: FULL COVER DIRECTO --- */
     @media (max-width: 768px) {
       .plyr--fullscreen-active video {
         width: 100vw !important; 
         height: 100vh !important;
         object-fit: cover !important; 
-        
-        /* 🔥 ACÁ ESTÁ LA MAGIA: 
-           0.95 lo achica un 5% para recuperar los márgenes cortados. 
-           Si lo querés achicar un poco más, probá con 0.90.
-           Si lo querés más grande, probá con 0.98. */
-        transform: scale(0.95) !important;
-        
         margin: 0 !important;
         padding: 0 !important;
       }
