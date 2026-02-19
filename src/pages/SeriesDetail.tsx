@@ -71,17 +71,34 @@ export default function SeriesDetail() {
     window.location.href = `${gumroadUrl}${separator}user_id=${session.user.id}&series_id=${(series as any).id}`;
   };
 
-  // Manejo de compra Argentina (Mercado Pago)
-  const handleMPPurchase = () => {
+  // Manejo de compra Argentina (Mercado Pago) - NUEVO FLUJO DINÁMICO
+  const handleMPPurchase = async () => {
     if (!session) return alert("Debes iniciar sesión para comprar.");
-    const mpUrl = (series as any)?.mp_url; 
-    if (!mpUrl) return alert("Link de Argentina no configurado en la base de datos.");
-
-    const separator = mpUrl.includes('?') ? '&' : '?';
-    const finalUrl = `${mpUrl}${separator}external_reference=${session.user.id}|${(series as any).id}`;
     
-    console.log("Redirigiendo a Mercado Pago:", finalUrl);
-    window.location.href = finalUrl;
+    try {
+      // Llamamos a nuestro nuevo fabricante de links en Vercel
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          seriesId: (series as any).id,
+          userId: session.user.id,
+          title: (series as any).titulo,
+          price: 100 // <-- OJO ACÁ: Está en 100 para la prueba. Cuando termines, poné el precio real.
+        })
+      });
+
+      const data = await res.json();
+      
+      if (data.url) {
+        // Redirigimos al usuario al link oficial recién creado
+        window.location.href = data.url;
+      } else {
+        alert("Error al generar el pago. Intentá de nuevo.");
+      }
+    } catch (e) {
+      alert("Error de conexión al generar el pago.");
+    }
   };
 
   if (error) return <Navigate to="/" />;
