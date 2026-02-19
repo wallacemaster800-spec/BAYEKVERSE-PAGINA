@@ -35,12 +35,10 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
     }
   }, [src, ytId])
 
-  // Contenedor que se adapta totalmente
-  const containerClass = "relative w-full flex items-center justify-center bg-black overflow-hidden select-none";
-
+  // --- RENDER YOUTUBE ---
   if (ytId) {
     return (
-      <div className={`${containerClass} aspect-video rounded-xl shadow-2xl`}>
+      <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl select-none">
         <iframe
           src={`https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1&showinfo=0`}
           className="absolute top-0 left-0 w-full h-full border-0"
@@ -51,21 +49,39 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
     )
   }
 
+  // --- RENDER HLS ---
   return (
-    <div className={containerClass}>
+    <div className="relative w-full flex items-center justify-center bg-black overflow-hidden select-none 
+                    landscape:fixed landscape:inset-0 landscape:z-[100] landscape:w-screen landscape:h-[100dvh]">
+      {/* AQUÍ ESTÁ LA MAGIA: 
+          - forced-full: 'w-full h-full object-contain'
+          - El estilo inline 'aspect-ratio' ayuda al navegador a calcular el encuadre.
+      */}
       <video
         ref={videoRef}
         controls
         playsInline
         poster={poster}
-        /* - h-auto en vertical.
-           - landscape:h-[100dvh] fuerza a que toque el borde superior e inferior en horizontal.
-           - object-contain asegura que NO se corte nada de la imagen.
-        */
-        className="w-full h-auto landscape:h-[100dvh] landscape:w-auto object-contain mx-auto"
+        className="w-full h-full max-h-screen object-contain mx-auto block"
         title={title}
-        style={{ backgroundColor: 'black' }}
+        style={{ 
+          backgroundColor: 'black',
+          width: '100%',
+          height: '100%',
+          maxHeight: '100dvh' 
+        }}
       />
+      
+      {/* CSS inyectado para forzar que el modo Fullscreen nativo no deje márgenes */}
+      <style>{`
+        video::-webkit-media-controls-enclosure {
+          border-radius: 0 !important;
+        }
+        video::-webkit-full-screen {
+          width: 100% !important;
+          height: 100% !important;
+        }
+      `}</style>
     </div>
   )
 }
