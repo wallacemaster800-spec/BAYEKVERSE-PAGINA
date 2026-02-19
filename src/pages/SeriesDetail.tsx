@@ -92,7 +92,8 @@ export default function SeriesDetail() {
 
   const handlePurchase = () => {
     if (!session) return alert("Iniciá sesión para comprar.");
-    const gumroadUrl = (series as any)?.lemon_url; 
+    // 🔥 CORRECCIÓN: Buscamos gumroad_url o lemon_url para que no de error
+    const gumroadUrl = (series as any)?.gumroad_url || (series as any)?.lemon_url; 
     if (!gumroadUrl) return alert("Link global no configurado.");
     window.location.href = `${gumroadUrl}${gumroadUrl.includes('?') ? '&' : '?'}user_id=${session.user.id}&series_id=${series?.id}`;
   };
