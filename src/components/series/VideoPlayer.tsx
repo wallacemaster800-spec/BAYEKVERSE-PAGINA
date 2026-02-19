@@ -106,15 +106,27 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
       background-color: black;
     }
 
-    /* --- MOBILE: Lógica Separada --- */
+    /* --- MOBILE: Lógica Separada (Estilo YouTube) --- */
     @media (max-width: 768px) {
       .plyr--fullscreen-active video {
-        /* Forzamos a que ocupe casi todo, pero dejando un ligerito margen a los lados */
-        width: 96vw !important; 
+        /* Clave: 100% de ancho y alto, con 'contain'.
+           Esto asegura que NUNCA se recorte la imagen. 
+           Si la pantalla es más "larga" que el video (celulares modernos), 
+           se verán franjas negras a los lados, como en Netflix.
+        */
+        width: 100vw !important; 
         height: 100vh !important;
-        object-fit: contain !important;
-        margin: 0 auto !important; /* Centra el video en la pantalla */
-        display: block;
+        object-fit: contain !important; 
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      
+      /* Ocultar barra de estado/notch en iOS si es posible */
+      .plyr--fullscreen-active {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
       }
     }
   `;
