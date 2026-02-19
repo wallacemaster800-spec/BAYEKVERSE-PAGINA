@@ -1,27 +1,28 @@
 import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
-  // Solo permitimos que Lemon Squeezy nos envíe datos (POST)
+  // Gumroad envía peticiones POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
   try {
     const payload = req.body;
-    const eventName = payload.meta.event_name;
 
-    // Solo nos interesa cuando alguien paga con éxito
-    if (eventName === 'order_created') {
-      const customData = payload.meta.custom_data;
-      const orderId = payload.data.id;
+    // Gumroad manda 'resource_name: sale' cuando alguien compra
+    if (payload.resource_name === 'sale') {
+      
+      // En Gumroad los custom fields llegan sueltos en el body
+      const userId = payload.user_id;
+      const seriesId = payload.series_id;
+      const orderId = payload.order_number; // El identificador del recibo de Gumroad
 
-      // Verificamos que vengan los datos que le mandamos desde React
-      if (!customData || !customData.user_id || !customData.series_id) {
+      // Verificamos que vengan los datos que le mandamos desde el frontend
+      if (!userId || !seriesId) {
         return res.status(400).json({ error: 'Faltan datos de usuario o serie' });
       }
 
-      // ⚠️ Nos conectamos a Supabase con la LLAVE MAESTRA (Service Role Key)
-      // Esta llave ignora la seguridad que pusimos en el Paso 1, por lo que SÍ puede insertar.
+      // ⚠️ Nos conectamos a Supabase con la LLAVE MAESTRA
       const supabaseAdmin = createClient(
         process.env.VITE_SUPABASE_URL,
         process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -31,9 +32,9 @@ export default async function handler(req, res) {
       const { error } = await supabaseAdmin
         .from('compras')
         .insert({
-          user_id: customData.user_id,
-          series_id: customData.series_id,
-          lemon_order_id: orderId
+          user_id: userId,
+          series_id: seriesId,
+          lemon_order_id: orderId // Usamos la misma columna para no tener que modificar Supabase
         });
 
       if (error) {
@@ -42,11 +43,11 @@ export default async function handler(req, res) {
       }
     }
 
-    // Le decimos a Lemon Squeezy "Mensaje recibido, todo OK"
-    return res.status(200).json({ success: true });
+    // Le decimos a Gumroad "Mensaje recibido, todo OK"
+    return res.status(200).send('OK');
 
   } catch (error) {
     console.error('Error catastrófico en el webhook:', error);
-    return res.status(500).json({ error: 'Error interno del servidor' });
+    return res.status(500).send('Error interno del servidor');
   }
 }

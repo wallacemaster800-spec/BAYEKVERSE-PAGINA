@@ -40,7 +40,6 @@ export default function SeriesDetail() {
     const checkPurchase = async () => {
       if (!session?.user?.id || !series?.id) return;
       
-      // El "as any" evita el error de TypeScript para tablas nuevas
       const { data } = await (supabase as any)
         .from('compras')
         .select('id')
@@ -61,25 +60,25 @@ export default function SeriesDetail() {
     }
   }, [selectedEpisode]);
 
-  // --- FUNCIÓN DE COMPRA (LEMON SQUEEZY DINÁMICO) ---
+  // --- FUNCIÓN DE COMPRA (GUMROAD DINÁMICO) ---
   const handlePurchase = () => {
     if (!session) {
       alert("Debes iniciar sesión para comprar.");
       return;
     }
 
-    const lemonUrl = series?.lemon_url;
+    const gumroadUrl = (series as any)?.lemon_url; // Seguimos usando la misma columna de la BD
 
-    if (!lemonUrl) {
+    if (!gumroadUrl) {
       alert("Esta serie aún no tiene link de compra configurado.");
       return;
     }
 
-    // Le pegamos los datos de rastreo para el Webhook
-    const separator = lemonUrl.includes('?') ? '&' : '?';
-    const LEMON_SQUEEZY_LINK = `${lemonUrl}${separator}checkout[custom][user_id]=${session.user.id}&checkout[custom][series_id]=${series.id}`;
+    // Le pegamos los datos de rastreo para el Webhook en el formato limpio de Gumroad
+    const separator = gumroadUrl.includes('?') ? '&' : '?';
+    const GUMROAD_LINK = `${gumroadUrl}${separator}user_id=${session.user.id}&series_id=${series.id}`;
     
-    window.location.href = LEMON_SQUEEZY_LINK;
+    window.location.href = GUMROAD_LINK;
   };
 
   if (error) return <Navigate to="/" />;
@@ -154,7 +153,7 @@ export default function SeriesDetail() {
                 {allEpisodes && (
                   <EpisodeNavigation
                     currentEpisode={selectedEpisode}
-                    allEpisodes={allEpisodes}
+                    allEpisodes={allEpisodes as any} 
                     onNavigate={setSelectedEpisode}
                   />
                 )}
@@ -190,7 +189,7 @@ export default function SeriesDetail() {
               <TabsContent value="episodios">
                 {allEpisodes ? (
                   <SeasonTabs
-                    episodes={allEpisodes}
+                    episodes={allEpisodes as any}
                     onSelectEpisode={setSelectedEpisode}
                     selectedEpisodeId={selectedEpisode?.id}
                     hasPurchased={hasPurchased} 
