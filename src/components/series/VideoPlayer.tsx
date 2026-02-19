@@ -45,9 +45,11 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
         ],
         ratio: '16:9',
         clickToPlay: true,
+        // En Android esto usa custom fullscreen. En iOS usa el nativo.
         fullscreen: { enabled: true, fallback: true, iosNative: true }
       });
 
+      // Lógica para girar pantalla automática (Android)
       player.on('enterfullscreen', () => {
         if (window.screen.orientation && window.screen.orientation.lock) {
           window.screen.orientation.lock('landscape').catch(() => {});
@@ -90,9 +92,8 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
     );
   }
 
-  // 🔥 CSS inyectado de forma SEGURA
   const customStyles = `
-    /* --- DESKTOP (Intacto) --- */
+    /* --- DESKTOP --- */
     .plyr { width: 100%; height: 100%; }
     .plyr video { object-fit: contain; }
     
@@ -100,24 +101,37 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
     .plyr__controls [data-plyr="play"] { order: 2; }
     .plyr__controls [data-plyr="fast-forward"] { order: 3; margin-left: 5px; }
 
-    .plyr--fullscreen-active video {
-      background-color: black;
+    /* --- MOBILE: TU TRUCO TAILWIND RESTAURADO + PLYR FORCE COVER --- */
+    @media (orientation: landscape) and (max-width: 900px) {
+      body { overflow: hidden !important; }
+      
+      /* Forzamos a Plyr y sus envoltorios a ocupar el 100% real de la pantalla */
+      .plyr, .plyr__video-wrapper {
+        width: 100vw !important;
+        height: 100dvh !important;
+        border-radius: 0 !important;
+      }
+      
+      /* Forzamos el video a COVER */
+      .plyr video {
+        width: 100vw !important;
+        height: 100dvh !important;
+        object-fit: cover !important;
+      }
     }
 
-    /* --- MOBILE: FULL COVER DIRECTO --- */
-    @media (max-width: 768px) {
-      .plyr--fullscreen-active video {
-        width: 100vw !important; 
-        height: 100vh !important;
-        object-fit: cover !important; 
-        margin: 0 !important;
-        padding: 0 !important;
-      }
+    /* En caso de que usen el botón de fullscreen en vez de solo girar */
+    .plyr--fullscreen-active, .plyr--fullscreen-active .plyr__video-wrapper, .plyr--fullscreen-active video {
+      width: 100vw !important;
+      height: 100vh !important;
+      object-fit: cover !important; 
     }
   `;
 
   return (
-    <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-white/5 custom-plyr-wrapper">
+    /* 🔥 VOLVIERON TUS CLASES DE LANDSCAPE FIXED AL CONTENEDOR PADRE */
+    <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-white/5 custom-plyr-wrapper
+                    landscape:fixed landscape:inset-0 landscape:z-[9999] landscape:w-screen landscape:h-[100dvh] landscape:aspect-auto landscape:rounded-none landscape:border-none">
       <video
         ref={videoRef}
         playsInline
