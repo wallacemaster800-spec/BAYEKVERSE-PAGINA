@@ -46,7 +46,7 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
   }, [src, ytId])
 
   // ==========================================
-  // RENDER A: MODO YOUTUBE
+  // RENDER A: MODO YOUTUBE (Mantiene 16:9 estándar)
   // ==========================================
   if (ytId) {
     return (
@@ -63,21 +63,22 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
   }
 
   // ==========================================
-  // RENDER B: MODO HLS (Sin recortes)
+  // RENDER B: MODO HLS (Auto-ajustable sin bordes)
   // ==========================================
   return (
-    <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl select-none">
+    /* Quitamos aspect-video para que el div se adapte al video */
+    <div className="relative w-full h-auto bg-black rounded-xl overflow-hidden shadow-2xl select-none border border-white/5">
       <video
         ref={videoRef}
         controls
         playsInline
         poster={poster}
-        /* Cambiamos object-cover por object-contain. 
-          Esto asegura que el video se vea ENTERO. 
-          Si sobran bordes, serán negros y no "aire" vacío.
+        /* h-auto y max-h aseguran que el video dicte el tamaño del marco
+           sin dejar espacios vacíos a los costados.
         */
-        className="w-full h-full object-contain rounded-xl"
+        className="w-full h-auto max-h-[75vh] block rounded-xl"
         title={title}
+        style={{ backgroundColor: 'black' }}
       />
     </div>
   )
