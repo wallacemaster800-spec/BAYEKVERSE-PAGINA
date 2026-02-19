@@ -46,37 +46,38 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
   }, [src, ytId])
 
   // ==========================================
-  // RENDER A: MODO YOUTUBE (Arreglado para móvil)
+  // RENDER A: MODO YOUTUBE
   // ==========================================
   if (ytId) {
     return (
-      <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border-none outline-none select-none ring-0">
+      <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl select-none">
         <iframe
           src={`https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1&showinfo=0&iv_load_policy=3`}
-          className="absolute top-0 left-0 w-full h-full border-0 outline-none"
+          className="absolute top-0 left-0 w-full h-full border-0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           title={title}
-          style={{ border: 0, outline: 'none' }}
         />
       </div>
     )
   }
 
   // ==========================================
-  // RENDER B: MODO HLS (Ajustado para llenar pantalla)
+  // RENDER B: MODO HLS (Sin recortes)
   // ==========================================
   return (
-    <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border-none outline-none select-none ring-0">
+    <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl select-none">
       <video
         ref={videoRef}
         controls
-        playsInline // Evita el salto forzado a pantalla completa en iOS
+        playsInline
         poster={poster}
-        // object-cover asegura que no haya márgenes negros
-        className="w-full h-full object-cover rounded-xl"
+        /* Cambiamos object-cover por object-contain. 
+          Esto asegura que el video se vea ENTERO. 
+          Si sobran bordes, serán negros y no "aire" vacío.
+        */
+        className="w-full h-full object-contain rounded-xl"
         title={title}
-        style={{ outline: 'none', border: 'none' }}
       />
     </div>
   )
