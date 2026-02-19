@@ -122,7 +122,7 @@ export default function SeriesDetail() {
                     <div className="absolute inset-0 bg-[url('https://res.cloudinary.com/dpv3kpsmt/image/upload/v1739818821/bayekverse_logo_vzr0r8.png')] bg-cover bg-center opacity-10 blur-sm mix-blend-screen" />
                     
                     <ShieldAlert className="w-16 h-16 text-amber-500 mb-4 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)] z-10" />
-                    <h2 className="text-2xl md:text-3xl font-display font-bold text-white mb-2 z-10 uppercase italic">Contenido Clasificado</h2>
+                    <h2 className="text-2xl md:text-3xl font-display font-bold text-white mb-2 z-10 uppercase italic">Contenido PREMIUM</h2>
                     <p className="text-muted-foreground mb-8 max-w-lg z-10 text-xs md:text-sm leading-relaxed">
                       Esta transmisión requiere una llave de acceso Premium. Adquiere el pase completo para desbloquear <strong className="text-amber-500">{(series as any).titulo}</strong> y todos sus archivos secretos.
                     </p>
