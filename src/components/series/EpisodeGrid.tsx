@@ -12,10 +12,15 @@ interface EpisodeGridProps {
   seriesId: string;
   onSelectEpisode: (episode: Capitulo) => void;
   selectedEpisodeId?: string;
-  hasPurchased?: boolean; // 🔥 Nuevo prop para saber si compró
+  hasPurchased?: boolean; // usuario compró la serie
 }
 
-export function EpisodeGrid({ seriesId, onSelectEpisode, selectedEpisodeId, hasPurchased = false }: EpisodeGridProps) {
+export function EpisodeGrid({
+  seriesId,
+  onSelectEpisode,
+  selectedEpisodeId,
+  hasPurchased = false,
+}: EpisodeGridProps) {
   const [page, setPage] = useState(0);
   const { data, isLoading, error } = useCapitulos(seriesId, page);
 
@@ -53,9 +58,8 @@ export function EpisodeGrid({ seriesId, onSelectEpisode, selectedEpisodeId, hasP
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {episodes.map((episode, index) => {
-          
-          // Lógica de bloqueo
           const isLocked = episode.es_pago && !hasPurchased;
+          const isVip = episode.es_pago && hasPurchased;
 
           return (
             <motion.button
@@ -72,42 +76,70 @@ export function EpisodeGrid({ seriesId, onSelectEpisode, selectedEpisodeId, hasP
             >
               <div className="relative aspect-video">
                 <OptimizedImage
-                  src={episode.miniatura_url || getYoutubeThumbnail(episode.youtube_id)}
+                  src={
+                    episode.miniatura_url ||
+                    getYoutubeThumbnail(episode.youtube_id)
+                  }
                   alt={episode.titulo}
                   size="thumbnail"
-                  className={`w-full h-full ${isLocked ? 'grayscale-[50%] brightness-75' : ''}`} // Oscurece un poco si está bloqueado
+                  className={`w-full h-full ${
+                    isLocked ? 'grayscale-[50%] brightness-75' : ''
+                  }`}
                 />
-                
-                {/* Ícono central al hacer hover (Play o Candado) */}
+
+                {/* Ícono hover */}
                 <div className="absolute inset-0 flex items-center justify-center bg-background/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isLocked ? 'bg-amber-500/90' : 'bg-primary/90'}`}>
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      isLocked
+                        ? 'bg-amber-500/90'
+                        : 'bg-primary/90'
+                    }`}
+                  >
                     {isLocked ? (
                       <Lock className="w-4 h-4 text-black" fill="currentColor" />
                     ) : (
-                      <Play className="w-4 h-4 text-primary-foreground ml-0.5" fill="currentColor" />
+                      <Play
+                        className="w-4 h-4 text-primary-foreground ml-0.5"
+                        fill="currentColor"
+                      />
                     )}
                   </div>
                 </div>
 
+                {/* Numero episodio */}
                 <div className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-background/80 rounded text-xs font-medium">
                   Ep. {episode.orden}
                 </div>
-                
-                {/* Etiqueta Premium fija arriba a la derecha si es de pago */}
+
+                {/* Badge Premium / VIP */}
                 {episode.es_pago && (
-                  <div className="absolute top-2 right-2 bg-amber-500 text-black text-[9px] uppercase font-black px-1.5 py-0.5 rounded shadow-sm">
-                    {isLocked ? <Lock className="w-2.5 h-2.5 inline mr-1" /> : ''}
-                    Premium
+                  <div
+                    className={`absolute top-2 right-2 text-[9px] uppercase font-black px-1.5 py-0.5 rounded shadow-sm flex items-center gap-1 ${
+                      isLocked
+                        ? 'bg-amber-500 text-black'
+                        : 'bg-green-600 text-white'
+                    }`}
+                  >
+                    {isLocked && <Lock className="w-2.5 h-2.5" />}
+                    {isLocked ? 'Premium' : 'VIP'}
                   </div>
                 )}
               </div>
+
               <div className="p-3">
-                <h4 className={`text-sm font-medium line-clamp-2 transition-colors ${isLocked ? 'group-hover:text-amber-500' : 'group-hover:text-primary'}`}>
+                <h4
+                  className={`text-sm font-medium line-clamp-2 transition-colors ${
+                    isLocked
+                      ? 'group-hover:text-amber-500'
+                      : 'group-hover:text-primary'
+                  }`}
+                >
                   {episode.titulo}
                 </h4>
               </div>
             </motion.button>
-          )
+          );
         })}
       </div>
 
