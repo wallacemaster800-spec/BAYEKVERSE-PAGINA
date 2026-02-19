@@ -21,6 +21,7 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
 
   useEffect(() => {
     if (ytId) return;
+
     const video = videoRef.current
     if (!video) return
 
@@ -28,10 +29,15 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
       video.src = src
     } 
     else if (Hls.isSupported()) {
-      const hls = new Hls({ maxBufferLength: 30 })
+      const hls = new Hls({
+        maxBufferLength: 30,
+      })
       hls.loadSource(src)
       hls.attachMedia(video)
-      return () => hls.destroy()
+
+      return () => {
+        hls.destroy()
+      }
     }
   }, [src, ytId])
 
@@ -40,8 +46,9 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
     return (
       <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl select-none">
         <iframe
-          src={`https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1&showinfo=0`}
+          src={`https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1&showinfo=0&iv_load_policy=3`}
           className="absolute top-0 left-0 w-full h-full border-0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           title={title}
         />
@@ -49,37 +56,46 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
     )
   }
 
-  // --- RENDER HLS ---
+  // --- RENDER HLS (Punto Zero) ---
   return (
     <div className="relative w-full flex items-center justify-center bg-black overflow-hidden select-none 
                     landscape:fixed landscape:inset-0 landscape:z-[100] landscape:w-screen landscape:h-[100dvh]">
-      {/* AQUÍ ESTÁ LA MAGIA: 
-          - forced-full: 'w-full h-full object-contain'
-          - El estilo inline 'aspect-ratio' ayuda al navegador a calcular el encuadre.
-      */}
       <video
         ref={videoRef}
         controls
         playsInline
         poster={poster}
-        className="w-full h-full max-h-screen object-contain mx-auto block"
+        /* Usamos object-cover para que se comporte igual que la miniatura.
+           Esto hará que el video toque techo y suelo. Si el video es más ancho que la pantalla,
+           se recortarán apenas los costados, pero se verá gigante.
+        */
+        className="w-full h-full object-cover md:object-contain mx-auto block outline-none border-none"
         title={title}
         style={{ 
           backgroundColor: 'black',
-          width: '100%',
-          height: '100%',
-          maxHeight: '100dvh' 
+          WebkitTapHighlightColor: 'transparent'
         }}
       />
-      
-      {/* CSS inyectado para forzar que el modo Fullscreen nativo no deje márgenes */}
+
+      {/* ESTILOS CRÍTICOS PARA PANTALLA COMPLETA NATIVA */}
       <style>{`
+        /* Forzamos al video a llenar la pantalla en modo Fullscreen nativo (Android/Chrome) */
+        video:fullscreen {
+          object-fit: cover !important;
+        }
+        /* Para navegadores basados en Webkit (Safari/iOS/Chrome Mobile) */
+        video:-webkit-full-screen {
+          object-fit: cover !important;
+          width: 100vw !important;
+          height: 100vh !important;
+        }
+        /* Elimina la línea blanca de renderizado en los bordes */
         video::-webkit-media-controls-enclosure {
           border-radius: 0 !important;
         }
-        video::-webkit-full-screen {
-          width: 100% !important;
-          height: 100% !important;
+        /* Asegura que el contenedor de pantalla completa sea negro puro */
+        video::backdrop {
+          background-color: black;
         }
       `}</style>
     </div>
