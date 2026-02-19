@@ -58,18 +58,17 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
 
   // --- RENDER HLS (Punto Zero) ---
   return (
-    <div className="relative w-full flex items-center justify-center bg-black overflow-hidden select-none 
-                    landscape:fixed landscape:inset-0 landscape:z-[100] landscape:w-screen landscape:h-[100dvh]">
+    <div className="relative w-full aspect-video flex items-center justify-center bg-black overflow-hidden select-none 
+                    landscape:fixed landscape:inset-0 landscape:z-[100] landscape:w-screen landscape:h-[100dvh] landscape:aspect-auto">
       <video
         ref={videoRef}
         controls
         playsInline
         poster={poster}
-        /* Usamos object-cover para que se comporte igual que la miniatura.
-           Esto hará que el video toque techo y suelo. Si el video es más ancho que la pantalla,
-           se recortarán apenas los costados, pero se verá gigante.
-        */
-        className="w-full h-full object-cover md:object-contain mx-auto block outline-none border-none"
+        /* Usamos object-contain. Esto garantiza que el video SIEMPRE se vea completo.
+           Al estar en un contenedor que ocupa 100dvh en landscape, tocará techo y suelo,
+           dejando márgenes negros a los lados si la pantalla del celular es muy alargada. */
+        className="w-full h-full object-contain mx-auto block outline-none border-none"
         title={title}
         style={{ 
           backgroundColor: 'black',
@@ -79,13 +78,13 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
 
       {/* ESTILOS CRÍTICOS PARA PANTALLA COMPLETA NATIVA */}
       <style>{`
-        /* Forzamos al video a llenar la pantalla en modo Fullscreen nativo (Android/Chrome) */
+        /* Forzamos contain en modo Fullscreen nativo para evitar el zoom/recorte */
         video:fullscreen {
-          object-fit: cover !important;
+          object-fit: contain !important;
         }
         /* Para navegadores basados en Webkit (Safari/iOS/Chrome Mobile) */
         video:-webkit-full-screen {
-          object-fit: cover !important;
+          object-fit: contain !important;
           width: 100vw !important;
           height: 100vh !important;
         }
@@ -93,7 +92,7 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
         video::-webkit-media-controls-enclosure {
           border-radius: 0 !important;
         }
-        /* Asegura que el contenedor de pantalla completa sea negro puro */
+        /* Asegura que el fondo sobrante a los lados sea negro puro */
         video::backdrop {
           background-color: black;
         }
