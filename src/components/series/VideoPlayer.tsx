@@ -37,16 +37,24 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         // Inicializamos Plyr DESPUÉS de que HLS esté listo
         new Plyr(video, {
-          controls: ['play-large','play','progress','current-time','mute','volume','fullscreen'],
+          controls: [
+            'play-large','play','rewind','fast-forward','progress','current-time','mute','volume','fullscreen'
+          ],
           ratio: '16:9',
+          clickToPlay: true,
+          fullscreen: { enabled: true, fallback: true, iosNative: true }
         })
       })
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = src
       video.addEventListener('loadedmetadata', () => {
         new Plyr(video, {
-          controls: ['play-large','play','progress','current-time','mute','volume','fullscreen'],
+          controls: [
+            'play-large','play','rewind','fast-forward','progress','current-time','mute','volume','fullscreen'
+          ],
           ratio: '16:9',
+          clickToPlay: true,
+          fullscreen: { enabled: true, fallback: true, iosNative: true }
         })
       })
     }
@@ -71,14 +79,26 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
 
   // HLS/MP4
   return (
-    <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-white/5">
+    <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-white/5 flex justify-center items-center">
       <video
         ref={videoRef}
         playsInline
         poster={poster} 
-        className="w-full h-full object-cover block outline-none border-none" // ⚡ object-cover para que miniatura llene el contenedor
+        className="max-h-full w-auto object-contain block outline-none border-none" // ⚡ ocupa todo el alto, márgenes laterales normales
         title={title}
       />
+
+      <style>{`
+        video:fullscreen, video:-webkit-full-screen {
+          width: 100vw !important;
+          height: 100vh !important;
+          object-fit: contain !important; 
+          background-color: black !important;
+        }
+        @media (orientation: landscape) {
+          body { overflow: hidden !important; }
+        }
+      `}</style>
     </div>
   )
 }
