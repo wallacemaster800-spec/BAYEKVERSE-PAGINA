@@ -40,7 +40,8 @@ export default function SeriesDetail() {
     const checkPurchase = async () => {
       if (!session?.user?.id || !series?.id) return;
       
-      const { data } = await supabase
+      // El "as any" evita el error de TypeScript para tablas nuevas
+      const { data } = await (supabase as any)
         .from('compras')
         .select('id')
         .eq('user_id', session.user.id)
@@ -60,18 +61,23 @@ export default function SeriesDetail() {
     }
   }, [selectedEpisode]);
 
-  // --- FUNCIÓN DE COMPRA (LEMON SQUEEZY) ---
+  // --- FUNCIÓN DE COMPRA (LEMON SQUEEZY DINÁMICO) ---
   const handlePurchase = () => {
     if (!session) {
-      // Si no está logueado, lo mandas a iniciar sesión
-      // Podrías usar navigate('/login') o abrir tu modal
       alert("Debes iniciar sesión para comprar.");
       return;
     }
 
-    // ⚠️ REEMPLAZA ESTA URL CON TU LINK REAL DE LEMON SQUEEZY
-    // Nota los parámetros "custom": Son VITALES para que el Webhook sepa a quién darle el acceso
-    const LEMON_SQUEEZY_LINK = `https://bayekverse.lemonsqueezy.com/buy/TU_LINK_AQUI?checkout[custom][user_id]=${session.user.id}&checkout[custom][series_id]=${series?.id}`;
+    const lemonUrl = series?.lemon_url;
+
+    if (!lemonUrl) {
+      alert("Esta serie aún no tiene link de compra configurado.");
+      return;
+    }
+
+    // Le pegamos los datos de rastreo para el Webhook
+    const separator = lemonUrl.includes('?') ? '&' : '?';
+    const LEMON_SQUEEZY_LINK = `${lemonUrl}${separator}checkout[custom][user_id]=${session.user.id}&checkout[custom][series_id]=${series.id}`;
     
     window.location.href = LEMON_SQUEEZY_LINK;
   };
@@ -156,7 +162,7 @@ export default function SeriesDetail() {
             )}
           </AnimatePresence>
 
-          {/* SERIES INFO (Igual que antes) */}
+          {/* SERIES INFO */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="max-w-5xl mx-auto mb-8">
             <div className="flex items-start gap-4">
               {series.portada_url && (
@@ -187,8 +193,6 @@ export default function SeriesDetail() {
                     episodes={allEpisodes}
                     onSelectEpisode={setSelectedEpisode}
                     selectedEpisodeId={selectedEpisode?.id}
-                    // Le pasamos el estado a SeasonTabs (Si tienes que modificar SeasonTabs, me avisas, 
-                    // pero con esto suele bastar para que se lo pase a EpisodeGrid)
                     hasPurchased={hasPurchased} 
                   />
                 ) : (

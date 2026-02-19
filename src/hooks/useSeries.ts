@@ -11,17 +11,21 @@ export interface Series {
   slug: string;
   created_at: string;
   updated_at: string;
+  es_pago?: boolean;
+  lemon_url?: string | null;
 }
 
 export interface Capitulo {
   id: string;
   series_id: string;
   titulo: string;
+  video_url?: string | null;
   youtube_id: string;
   miniatura_url: string | null;
   orden: number;
   temporada: number;
   created_at: string;
+  es_pago?: boolean;
 }
 
 export interface Lore {

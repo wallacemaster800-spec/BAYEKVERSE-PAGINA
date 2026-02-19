@@ -15,10 +15,15 @@ const SeriesDetail = lazy(() => import("./pages/SeriesDetail"));
 const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword")); // Asegurate que este archivo existe
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const SeriesEditor = lazy(() => import("./pages/admin/SeriesEditor"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+
+// 🔥 PÁGINAS LEGALES (Asegúrate de que la ruta coincida con donde guardaste los archivos)
+const Terminos = lazy(() => import("./pages/terminos"));
+const Privacidad = lazy(() => import("./pages/privacidad"));
+const Reembolsos = lazy(() => import("./pages/reembolsos"));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -44,8 +49,6 @@ function SessionGuard({ children }: { children: React.ReactNode }) {
     const check = async () => {
       const { data, error } = await supabase.auth.getSession();
       if (error || !data.session) {
-        // Solo cerramos sesión si hay un error explícito o session es null
-        // Evitamos bucles infinitos no forzando el signOut a menos que sea necesario
         await supabase.auth.signOut();
         Object.keys(localStorage).forEach((key) => {
           if (key.startsWith('sb-')) {
@@ -88,6 +91,11 @@ const App = () => (
                   {/* 🔥 RUTAS DE PASSWORD */}
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
+
+                  {/* 🔥 RUTAS LEGALES (Públicas) */}
+                  <Route path="/terminos" element={<Terminos />} />
+                  <Route path="/privacidad" element={<Privacidad />} />
+                  <Route path="/reembolsos" element={<Reembolsos />} />
 
                   <Route
                     path="/admin"

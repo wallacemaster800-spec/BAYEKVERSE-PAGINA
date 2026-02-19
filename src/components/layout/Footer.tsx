@@ -97,7 +97,13 @@ export function Footer() {
             </a>
           </div>
 
-          <div className="mt-8 text-center text-xs text-muted-foreground">
+          {/* 🔥 LEGAL LINKS & COPYRIGHT */}
+          <div className="mt-8 pt-8 border-t border-border/50 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-4 md:gap-6 flex-wrap justify-center">
+              <Link to="/terminos" className="hover:text-foreground transition-colors">Términos y Condiciones</Link>
+              <Link to="/privacidad" className="hover:text-foreground transition-colors">Privacidad</Link>
+              <Link to="/reembolsos" className="hover:text-foreground transition-colors">Reembolsos</Link>
+            </div>
             <p>© {new Date().getFullYear()} Bayekverse. Todos los derechos reservados.</p>
           </div>
         </div>

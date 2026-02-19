@@ -138,6 +138,7 @@ export default function SeriesEditor() {
     portada_url: '',
     estado: 'En emisión' as 'En emisión' | 'Finalizada',
     es_pago: false,
+    lemon_url: '', // 🔥 AGREGA ESTO
   });
 
   // Estado Capítulos
@@ -178,6 +179,7 @@ export default function SeriesEditor() {
         portada_url: series.portada_url || '',
         estado: series.estado,
         es_pago: series.es_pago || false,
+        lemon_url: series.lemon_url || '', // 🔥 AGREGA ESTO
       });
     }
   }, [series]);
@@ -414,6 +416,19 @@ export default function SeriesEditor() {
                       />
                       <Label htmlFor="serie_pago" className="text-base font-semibold cursor-pointer italic text-amber-500">¿Esta obra es Premium (Requiere Suscripción)?</Label>
                     </div>
+
+                    {/* 🔥 CAJA PARA EL LINK DE LEMON SQUEEZY */}
+                    {seriesForm.es_pago && (
+                      <div className="space-y-2 mt-4 p-4 border border-amber-500/20 rounded-lg bg-amber-500/5">
+                        <Label className="text-amber-500">Link de Checkout (Lemon Squeezy)</Label>
+                        <Input 
+                          placeholder="https://bayekverse.lemonsqueezy.com/checkout/buy/..." 
+                          value={seriesForm.lemon_url} 
+                          onChange={e => setSeriesForm({...seriesForm, lemon_url: e.target.value})} 
+                        />
+                        <p className="text-[10px] text-muted-foreground">Pega aquí el link de compra (Checkout Link) de Lemon Squeezy.</p>
+                      </div>
+                    )}
 
                     <div className="flex justify-end pt-4"><Button onClick={handleSaveSeries} disabled={updateSeries.isPending}><Save className="w-4 h-4 mr-2" /> Actualizar Datos de Serie</Button></div>
                   </CardContent>
