@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,7 +12,7 @@ import { LoreViewer } from '@/components/series/LoreViewer';
 import { GalleryMosaic } from '@/components/series/GalleryMosaic';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OptimizedImage } from '@/components/ui/optimized-image';
-import { Play, BookOpen, Image as ImageIcon, Lock, ShieldAlert, Globe, CreditCard } from 'lucide-react';
+import { Play, BookOpen, Image as ImageIcon, ShieldAlert, Globe, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { META_DEFAULTS } from '@/lib/constants';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,7 +23,6 @@ export default function SeriesDetail() {
   const { session } = useAuth();
   const { data: seriesData, isLoading, error } = useSeriesBySlug(slug || '');
   
-  // Normalizamos la serie porque a veces los hooks devuelven arrays
   const series = Array.isArray(seriesData) ? seriesData[0] : seriesData;
 
   const [selectedEpisode, setSelectedEpisode] = useState<Capitulo | null>(null);
@@ -37,31 +36,51 @@ export default function SeriesDetail() {
     window.scrollTo(0, 0);
   }, [slug]);
 
-  // VERIFICACIÓN DE COMPRA - ROBUSTA
-  useEffect(() => {
-    const checkPurchase = async () => {
-      if (!session?.user?.id || !series?.id) return;
-      
+  // 🔥 FUNCIÓN ROBUSTA DE VERIFICACIÓN DE COMPRA
+  const checkPurchase = useCallback(async () => {
+    if (!session?.user?.id || !series?.id) return;
+
+    try {
       const { data, error: purchaseError } = await (supabase as any)
         .from('compras')
         .select('id')
         .eq('user_id', session.user.id)
-        .eq('series_id', series.id);
+        .eq('series_id', series.id)
+        .limit(1);
 
       if (purchaseError) {
         console.error("Error al consultar compras:", purchaseError.message);
         return;
       }
 
-      if (data && data.length > 0) {
-        setHasPurchased(true);
-      } else {
-        setHasPurchased(false);
+      setHasPurchased(!!(data && data.length > 0));
+    } catch (err) {
+      console.error("Error inesperado verificando compra:", err);
+    }
+  }, [session?.user?.id, series?.id]);
+
+  // Primera verificación
+  useEffect(() => {
+    checkPurchase();
+  }, [checkPurchase]);
+
+  // 🔁 REVALIDAR CUANDO EL USUARIO VUELVE DEL PAGO (FOCUS)
+  useEffect(() => {
+    const handleFocus = () => checkPurchase();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [checkPurchase]);
+
+  // 🔁 REVALIDAR SI LA PESTAÑA VUELVE A SER VISIBLE (post MercadoPago)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkPurchase();
       }
     };
-    
-    checkPurchase();
-  }, [session, series]);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [checkPurchase]);
 
   useEffect(() => {
     if (selectedEpisode && playerRef.current) {
@@ -78,7 +97,6 @@ export default function SeriesDetail() {
     window.location.href = `${gumroadUrl}${gumroadUrl.includes('?') ? '&' : '?'}user_id=${session.user.id}&series_id=${series?.id}`;
   };
 
-  // MANEJO DE MERCADO PAGO CORREGIDO
   const handleMPPurchase = async () => {
     if (!session) return alert("Iniciá sesión para comprar.");
     if (!series?.id) return alert("Error: No se cargó el ID de la serie.");
@@ -90,7 +108,7 @@ export default function SeriesDetail() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          seriesId: series.id, // UUID Seguro
+          seriesId: series.id,
           userId: session.user.id,
           title: (series as any).titulo
         })
