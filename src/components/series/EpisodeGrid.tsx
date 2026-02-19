@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Play, ChevronDown, Lock } from 'lucide-react';
+import { Play, ChevronDown, Lock, CheckCircle2 } from 'lucide-react'; // Agregamos CheckCircle2
 import { useCapitulos, Capitulo } from '@/hooks/useSeries';
 import { SkeletonEpisode } from '@/components/ui/skeleton-card';
 import { getYoutubeThumbnail } from '@/lib/cloudinary';
@@ -23,6 +23,10 @@ export function EpisodeGrid({
 }: EpisodeGridProps) {
   const [page, setPage] = useState(0);
   const { data, isLoading, error } = useCapitulos(seriesId, page);
+
+  // LOG DE DEBUG: Si ves "Compra en el componente: false" en la consola, 
+  // el problema es que la prop no está llegando desde SeasonTabs.
+  console.log(`🎬 Serie: ${seriesId} | Compra en el componente:`, hasPurchased);
 
   if (error) {
     return (
@@ -58,6 +62,7 @@ export function EpisodeGrid({
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {episodes.map((episode, index) => {
+          // LÓGICA DE ESTADO
           const isLocked = episode.es_pago && !hasPurchased;
           const isVip = episode.es_pago && hasPurchased;
 
@@ -82,15 +87,15 @@ export function EpisodeGrid({
                   }
                   alt={episode.titulo}
                   size="thumbnail"
-                  className={`w-full h-full ${
-                    isLocked ? 'grayscale-[50%] brightness-75' : ''
+                  className={`w-full h-full transition-all ${
+                    isLocked ? 'grayscale-[50%] brightness-50' : 'grayscale-0'
                   }`}
                 />
 
-                {/* Ícono hover */}
+                {/* Ícono hover central */}
                 <div className="absolute inset-0 flex items-center justify-center bg-background/30 opacity-0 group-hover:opacity-100 transition-opacity">
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${
                       isLocked
                         ? 'bg-amber-500/90'
                         : 'bg-primary/90'
@@ -107,22 +112,26 @@ export function EpisodeGrid({
                   </div>
                 </div>
 
-                {/* Numero episodio */}
-                <div className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-background/80 rounded text-xs font-medium">
-                  Ep. {episode.orden}
+                {/* Número episodio */}
+                <div className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-black/80 backdrop-blur-md rounded text-[10px] font-bold text-white border border-white/10">
+                  EP. {episode.orden}
                 </div>
 
-                {/* Badge Premium / VIP */}
+                {/* BADGE PREMIUM / VIP (Aquí es donde ocurre la magia) */}
                 {episode.es_pago && (
                   <div
-                    className={`absolute top-2 right-2 text-[9px] uppercase font-black px-1.5 py-0.5 rounded shadow-sm flex items-center gap-1 ${
+                    className={`absolute top-2 right-2 text-[10px] uppercase font-black px-2 py-0.5 rounded shadow-lg flex items-center gap-1.5 transition-colors ${
                       isLocked
-                        ? 'bg-amber-500 text-black'
-                        : 'bg-green-600 text-white'
+                        ? 'bg-amber-500 text-black' 
+                        : 'bg-green-500 text-white border border-green-400 animate-pulse-slow'
                     }`}
                   >
-                    {isLocked && <Lock className="w-2.5 h-2.5" />}
-                    {isLocked ? 'Premium' : 'VIP'}
+                    {isLocked ? (
+                      <Lock className="w-3 h-3" />
+                    ) : (
+                      <CheckCircle2 className="w-3 h-3" />
+                    )}
+                    <span>{isLocked ? 'Premium' : 'VIP'}</span>
                   </div>
                 )}
               </div>
@@ -131,8 +140,8 @@ export function EpisodeGrid({
                 <h4
                   className={`text-sm font-medium line-clamp-2 transition-colors ${
                     isLocked
-                      ? 'group-hover:text-amber-500'
-                      : 'group-hover:text-primary'
+                      ? 'text-muted-foreground group-hover:text-amber-500'
+                      : 'text-foreground group-hover:text-primary'
                   }`}
                 >
                   {episode.titulo}
