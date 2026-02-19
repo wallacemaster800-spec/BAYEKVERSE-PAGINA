@@ -106,6 +106,24 @@ export function useCapitulos(seriesId: string, page: number = 0) {
   });
 }
 
+export function useLore(seriesId: string) {
+  return useQuery({
+    queryKey: ['lore', seriesId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('lore')
+        .select('*')
+        .eq('series_id', seriesId)
+        .order('orden', { ascending: true });
+
+      if (error) throw error;
+      return data as Lore[];
+    },
+    enabled: !!seriesId,
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+}
+
 /* ======================
    MUTATIONS SEGURAS
 ====================== */
