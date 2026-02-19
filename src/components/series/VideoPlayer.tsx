@@ -22,41 +22,33 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
   const ytId = extractYouTubeId(src)
 
   useEffect(() => {
-    if (ytId) return // YouTube → no HLS
+    if (ytId) return
 
     const video = videoRef.current
     if (!video) return
 
     let hls: Hls | null = null
 
-    // 1️⃣ Primero HLS
+    const initPlyr = () => {
+      new Plyr(video, {
+        controls: [
+          'play-large', 'play', 'rewind', 'fast-forward',
+          'progress', 'current-time', 'mute', 'volume', 'fullscreen'
+        ],
+        ratio: '16:9',
+        clickToPlay: true,
+        fullscreen: { enabled: true, fallback: true, iosNative: true }
+      })
+    }
+
     if (Hls.isSupported()) {
       hls = new Hls({ maxBufferLength: 30 })
       hls.loadSource(src)
       hls.attachMedia(video)
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        // Inicializamos Plyr DESPUÉS de que HLS esté listo
-        new Plyr(video, {
-          controls: [
-            'play-large','play','rewind','fast-forward','progress','current-time','mute','volume','fullscreen'
-          ],
-          ratio: '16:9',
-          clickToPlay: true,
-          fullscreen: { enabled: true, fallback: true, iosNative: true }
-        })
-      })
+      hls.on(Hls.Events.MANIFEST_PARSED, initPlyr)
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = src
-      video.addEventListener('loadedmetadata', () => {
-        new Plyr(video, {
-          controls: [
-            'play-large','play','rewind','fast-forward','progress','current-time','mute','volume','fullscreen'
-          ],
-          ratio: '16:9',
-          clickToPlay: true,
-          fullscreen: { enabled: true, fallback: true, iosNative: true }
-        })
-      })
+      video.addEventListener('loadedmetadata', initPlyr)
     }
 
     return () => {
@@ -77,14 +69,13 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
     )
   }
 
-  // HLS/MP4
   return (
-    <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-white/5 flex justify-center items-center">
+    <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-white/5">
       <video
         ref={videoRef}
         playsInline
-        poster={poster} 
-        className="max-h-full w-auto object-contain block outline-none border-none" // ⚡ ocupa todo el alto, márgenes laterales normales
+        poster={poster}
+        className="w-full h-full object-cover block outline-none border-none" 
         title={title}
       />
 
@@ -92,7 +83,7 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
         video:fullscreen, video:-webkit-full-screen {
           width: 100vw !important;
           height: 100vh !important;
-          object-fit: contain !important; 
+          object-fit: cover !important; /* zoom ligero para que no se vea cortado */
           background-color: black !important;
         }
         @media (orientation: landscape) {
