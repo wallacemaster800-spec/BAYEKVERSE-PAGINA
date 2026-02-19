@@ -2,6 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PAGINATION_LIMIT } from '@/lib/constants';
 
+/* ======================
+   TYPES
+====================== */
+
 export interface Series {
   id: string;
   titulo: string;
@@ -13,6 +17,7 @@ export interface Series {
   updated_at: string;
   es_pago?: boolean;
   lemon_url?: string | null;
+  precio?: number | null;
 }
 
 export interface Capitulo {
@@ -44,6 +49,16 @@ export interface GaleriaItem {
   imagen_url: string;
   titulo: string | null;
   created_at: string;
+}
+
+/* ======================
+   HELPERS
+====================== */
+
+function assertId(id?: string | null) {
+  if (!id || id.trim() === '') {
+    throw new Error('ID inválido para operación crítica');
+  }
 }
 
 /* ======================
@@ -106,10 +121,6 @@ export function useCapitulos(seriesId: string, page: number = 0) {
   });
 }
 
-/* ======================
-   NUEVOS HOOKS (LORE + GALERIA)
-====================== */
-
 export function useLore(seriesId: string) {
   return useQuery({
     queryKey: ['lore', seriesId],
@@ -147,14 +158,57 @@ export function useGaleria(seriesId: string) {
 }
 
 /* ======================
-   MUTATIONS SEGURAS
+   CREATE / UPDATE
 ====================== */
 
-function assertId(id?: string | null) {
-  if (!id || id.trim() === '') {
-    throw new Error('ID inválido para operación crítica');
-  }
+export function useCreateSeries() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (
+      newSeries: Omit<Series, 'id' | 'created_at' | 'updated_at'>
+    ) => {
+      const { data, error } = await supabase
+        .from('series')
+        .insert([newSeries])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as Series;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['series'] });
+    },
+  });
 }
+
+export function useUpdateSeries() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Series> & { id: string }) => {
+      assertId(id);
+
+      const { data, error } = await supabase
+        .from('series')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as Series;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['series'] });
+    },
+  });
+}
+
+/* ======================
+   DELETE
+====================== */
 
 export function useDeleteSeries() {
   const queryClient = useQueryClient();
@@ -162,6 +216,7 @@ export function useDeleteSeries() {
   return useMutation({
     mutationFn: async (id: string) => {
       assertId(id);
+
       const { error } = await supabase
         .from('series')
         .delete()
@@ -181,6 +236,7 @@ export function useDeleteCapitulo() {
   return useMutation({
     mutationFn: async ({ id, seriesId }: { id: string; seriesId: string }) => {
       assertId(id);
+
       const { error } = await supabase
         .from('capitulos')
         .delete()
@@ -201,6 +257,7 @@ export function useDeleteLore() {
   return useMutation({
     mutationFn: async ({ id, seriesId }: { id: string; seriesId: string }) => {
       assertId(id);
+
       const { error } = await supabase
         .from('lore')
         .delete()
@@ -221,6 +278,7 @@ export function useDeleteGaleriaItem() {
   return useMutation({
     mutationFn: async ({ id, seriesId }: { id: string; seriesId: string }) => {
       assertId(id);
+
       const { error } = await supabase
         .from('galeria')
         .delete()
