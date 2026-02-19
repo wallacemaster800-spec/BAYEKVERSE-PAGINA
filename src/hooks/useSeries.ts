@@ -106,6 +106,10 @@ export function useCapitulos(seriesId: string, page: number = 0) {
   });
 }
 
+/* ======================
+   NUEVOS HOOKS (LORE + GALERIA)
+====================== */
+
 export function useLore(seriesId: string) {
   return useQuery({
     queryKey: ['lore', seriesId],
@@ -118,6 +122,24 @@ export function useLore(seriesId: string) {
 
       if (error) throw error;
       return data as Lore[];
+    },
+    enabled: !!seriesId,
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+}
+
+export function useGaleria(seriesId: string) {
+  return useQuery({
+    queryKey: ['galeria', seriesId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('galeria')
+        .select('*')
+        .eq('series_id', seriesId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as GaleriaItem[];
     },
     enabled: !!seriesId,
     staleTime: 1000 * 60 * 60 * 24,
