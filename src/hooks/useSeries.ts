@@ -52,16 +52,6 @@ export interface GaleriaItem {
 }
 
 /* ======================
-   HELPERS
-====================== */
-
-function assertId(id?: string | null) {
-  if (!id || id.trim() === '') {
-    throw new Error('ID inválido para operación crítica');
-  }
-}
-
-/* ======================
    QUERIES
 ====================== */
 
@@ -95,7 +85,6 @@ export function useSeriesBySlug(slug: string) {
       return data as Series | null;
     },
     enabled: !!slug,
-    staleTime: 1000 * 60 * 60 * 24,
   });
 }
 
@@ -117,7 +106,6 @@ export function useCapitulos(seriesId: string, page: number = 0) {
       return { data: data as Capitulo[], count: count ?? 0 };
     },
     enabled: !!seriesId,
-    staleTime: 1000 * 60 * 60 * 24,
   });
 }
 
@@ -135,7 +123,6 @@ export function useLore(seriesId: string) {
       return data as Lore[];
     },
     enabled: !!seriesId,
-    staleTime: 1000 * 60 * 60 * 24,
   });
 }
 
@@ -153,62 +140,38 @@ export function useGaleria(seriesId: string) {
       return data as GaleriaItem[];
     },
     enabled: !!seriesId,
-    staleTime: 1000 * 60 * 60 * 24,
   });
 }
 
 /* ======================
-   CREATE / UPDATE
+   MUTATIONS
 ====================== */
+
+function assertId(id?: string | null) {
+  if (!id || id.trim() === '') {
+    throw new Error('ID inválido para operación crítica');
+  }
+}
 
 export function useCreateSeries() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (
-      newSeries: Omit<Series, 'id' | 'created_at' | 'updated_at'>
-    ) => {
+    mutationFn: async (payload: Partial<Series>) => {
       const { data, error } = await supabase
         .from('series')
-        .insert([newSeries])
+        .insert([payload])
         .select()
         .single();
 
       if (error) throw error;
-      return data as Series;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['series'] });
     },
   });
 }
-
-export function useUpdateSeries() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<Series> & { id: string }) => {
-      assertId(id);
-
-      const { data, error } = await supabase
-        .from('series')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data as Series;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['series'] });
-    },
-  });
-}
-
-/* ======================
-   DELETE
-====================== */
 
 export function useDeleteSeries() {
   const queryClient = useQueryClient();
@@ -216,7 +179,6 @@ export function useDeleteSeries() {
   return useMutation({
     mutationFn: async (id: string) => {
       assertId(id);
-
       const { error } = await supabase
         .from('series')
         .delete()
@@ -230,13 +192,34 @@ export function useDeleteSeries() {
   });
 }
 
+export function useCreateCapitulo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: Partial<Capitulo>) => {
+      const { data, error } = await supabase
+        .from('capitulos')
+        .insert([payload])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as Capitulo;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: ['capitulos', data.series_id],
+      });
+    },
+  });
+}
+
 export function useDeleteCapitulo() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ id, seriesId }: { id: string; seriesId: string }) => {
       assertId(id);
-
       const { error } = await supabase
         .from('capitulos')
         .delete()
@@ -251,13 +234,32 @@ export function useDeleteCapitulo() {
   });
 }
 
+export function useCreateLore() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: Partial<Lore>) => {
+      const { data, error } = await supabase
+        .from('lore')
+        .insert([payload])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as Lore;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['lore', data.series_id] });
+    },
+  });
+}
+
 export function useDeleteLore() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ id, seriesId }: { id: string; seriesId: string }) => {
       assertId(id);
-
       const { error } = await supabase
         .from('lore')
         .delete()
@@ -272,13 +274,32 @@ export function useDeleteLore() {
   });
 }
 
+export function useCreateGaleriaItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: Partial<GaleriaItem>) => {
+      const { data, error } = await supabase
+        .from('galeria')
+        .insert([payload])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as GaleriaItem;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['galeria', data.series_id] });
+    },
+  });
+}
+
 export function useDeleteGaleriaItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ id, seriesId }: { id: string; seriesId: string }) => {
       assertId(id);
-
       const { error } = await supabase
         .from('galeria')
         .delete()
