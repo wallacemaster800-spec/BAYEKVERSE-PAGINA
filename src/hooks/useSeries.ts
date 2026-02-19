@@ -2,10 +2,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PAGINATION_LIMIT } from '@/lib/constants';
 
-/* ======================
-   TYPES
-====================== */
-
 export interface Series {
   id: string;
   titulo: string;
@@ -17,7 +13,6 @@ export interface Series {
   updated_at: string;
   es_pago?: boolean;
   lemon_url?: string | null;
-  precio?: number | null;
 }
 
 export interface Capitulo {
@@ -85,6 +80,7 @@ export function useSeriesBySlug(slug: string) {
       return data as Series | null;
     },
     enabled: !!slug,
+    staleTime: 1000 * 60 * 60 * 24,
   });
 }
 
@@ -106,6 +102,7 @@ export function useCapitulos(seriesId: string, page: number = 0) {
       return { data: data as Capitulo[], count: count ?? 0 };
     },
     enabled: !!seriesId,
+    staleTime: 1000 * 60 * 60 * 24,
   });
 }
 
@@ -123,6 +120,7 @@ export function useLore(seriesId: string) {
       return data as Lore[];
     },
     enabled: !!seriesId,
+    staleTime: 1000 * 60 * 60 * 24,
   });
 }
 
@@ -140,11 +138,12 @@ export function useGaleria(seriesId: string) {
       return data as GaleriaItem[];
     },
     enabled: !!seriesId,
+    staleTime: 1000 * 60 * 60 * 24,
   });
 }
 
 /* ======================
-   MUTATIONS
+   MUTATIONS SEGURAS
 ====================== */
 
 function assertId(id?: string | null) {
@@ -152,6 +151,8 @@ function assertId(id?: string | null) {
     throw new Error('ID inválido para operación crítica');
   }
 }
+
+/* SERIES */
 
 export function useCreateSeries() {
   const queryClient = useQueryClient();
@@ -165,7 +166,31 @@ export function useCreateSeries() {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Series;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['series'] });
+    },
+  });
+}
+
+export function useUpdateSeries() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: Partial<Series> & { id: string }) => {
+      assertId(payload.id);
+      const { id, ...rest } = payload;
+
+      const { data, error } = await supabase
+        .from('series')
+        .update(rest)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as Series;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['series'] });
@@ -192,6 +217,8 @@ export function useDeleteSeries() {
   });
 }
 
+/* CAPITULOS */
+
 export function useCreateCapitulo() {
   const queryClient = useQueryClient();
 
@@ -207,9 +234,7 @@ export function useCreateCapitulo() {
       return data as Capitulo;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: ['capitulos', data.series_id],
-      });
+      queryClient.invalidateQueries({ queryKey: ['capitulos', data.series_id] });
     },
   });
 }
@@ -234,25 +259,7 @@ export function useDeleteCapitulo() {
   });
 }
 
-export function useCreateLore() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (payload: Partial<Lore>) => {
-      const { data, error } = await supabase
-        .from('lore')
-        .insert([payload])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data as Lore;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['lore', data.series_id] });
-    },
-  });
-}
+/* LORE */
 
 export function useDeleteLore() {
   const queryClient = useQueryClient();
@@ -274,25 +281,7 @@ export function useDeleteLore() {
   });
 }
 
-export function useCreateGaleriaItem() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (payload: Partial<GaleriaItem>) => {
-      const { data, error } = await supabase
-        .from('galeria')
-        .insert([payload])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data as GaleriaItem;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['galeria', data.series_id] });
-    },
-  });
-}
+/* GALERIA */
 
 export function useDeleteGaleriaItem() {
   const queryClient = useQueryClient();
