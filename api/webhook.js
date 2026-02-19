@@ -1,80 +1,52 @@
 import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
+  if (req.method !== 'POST') return res.status(405).send('Método no permitido');
 
-  // 1. EL RADAR: Esto va a imprimir en Vercel TODO lo que mande Mercado Pago
-  console.log('=== NUEVO EVENTO RECIBIDO EN EL WEBHOOK ===');
-  console.log('Cuerpo del mensaje (Payload):', JSON.stringify(req.body, null, 2));
-
-  const supabaseAdmin = createClient(
-    process.env.VITE_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
+  // 1. Siempre respondemos 200 a Mercado Pago primero
+  res.status(200).send('OK');
 
   try {
-    const payload = req.body;
+    const id = req.query.id || (req.body.data && req.body.data.id);
+    const type = req.query.topic || req.body.type;
 
-    // --- CASO 1: GUMROAD ---
-    if (payload.resource_name === 'sale') {
-      console.log('Detectada compra de Gumroad. Procesando...');
-      const { error } = await supabaseAdmin.from('compras').insert({
-        user_id: payload.user_id,
-        series_id: payload.series_id,
-        lemon_order_id: `GUM-${payload.order_number}`
-      });
-      if (error) throw error;
-      console.log('Gumroad: Compra guardada con éxito.');
-      return res.status(200).send('OK Gumroad');
-    }
+    if (type !== 'payment') return;
 
-    // --- CASO 2: MERCADO PAGO ---
-    // MP envía 'type: payment' o 'action: payment.created'
-    if (payload.type === 'payment' || payload.action === 'payment.created') {
-      console.log('Detectado aviso de Pago de Mercado Pago. ID:', payload.data?.id || payload.id);
-      
-      const paymentId = payload.data?.id || payload.id;
+    // 2. Consultamos el pago real
+    const mpResponse = await fetch(`https://api.mercadopago.com/v1/payments/${id}`, {
+      headers: { 'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}` }
+    });
 
-      // Consultamos a MP para verificar que el pago sea real y esté aprobado
-      const mpRes = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-        headers: { Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}` }
-      });
-      
-      const paymentData = await mpRes.json();
-      console.log('Estado del pago en MP:', paymentData.status);
+    const paymentData = await mpResponse.json();
 
-      if (paymentData.status === 'approved') {
-        console.log('El pago está APROBADO. Referencia externa:', paymentData.external_reference);
-        
-        // Sacamos los IDs: "userId|seriesId"
-        if (!paymentData.external_reference) {
-          console.error('ERROR CRÍTICO: Mercado Pago no devolvió el external_reference');
-          return res.status(400).send('Falta external_reference');
-        }
+    if (paymentData.status === 'approved') {
+      // 3. Extraemos el usuario y la serie (separados por |)
+      const [userId, seriesId] = paymentData.external_reference.split('|');
 
-        const [userId, seriesId] = paymentData.external_reference.split('|');
+      // 4. Conectamos a Supabase
+      const supabaseAdmin = createClient(
+        process.env.VITE_SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+      );
 
-        console.log(`Guardando en DB -> User: ${userId}, Serie: ${seriesId}`);
-        const { error } = await supabaseAdmin.from('compras').insert({
-          user_id: userId,
-          series_id: seriesId,
-          lemon_order_id: `MP-${paymentId}`
-        });
-        
-        if (error) throw error;
-        console.log('Mercado Pago: Compra guardada con éxito en Supabase.');
+      // 5. Guardamos la compra (SOLO las columnas que sabemos que existen)
+      const { error } = await supabaseAdmin
+        .from('compras')
+        .insert([
+          { 
+            user_id: userId, 
+            series_id: seriesId,
+            payment_id: String(id) // Guardamos el ID de MP por seguridad
+          }
+        ]);
+
+      if (error) {
+        console.error('Error insertando en Supabase:', error.message);
       } else {
-        console.log('El pago no está aprobado todavía. Estado actual:', paymentData.status);
+        console.log('✅ COMPRA GUARDADA CON ÉXITO');
       }
-      
-      return res.status(200).send('OK MercadoPago');
     }
-
-    console.log('Evento ignorado (no es payment ni sale)');
-    return res.status(200).send('Evento ignorado');
-
-  } catch (error) {
-    console.error('Webhook Error CRÍTICO:', error);
-    return res.status(500).send('Error interno');
+  } catch (err) {
+    console.error('Webhook Error CRÍTICO:', err.message);
   }
 }
