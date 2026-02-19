@@ -45,16 +45,13 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
         ],
         ratio: '16:9',
         clickToPlay: true,
-        // Configuración robusta para fullscreen en móviles
         fullscreen: { enabled: true, fallback: true, iosNative: true }
       });
 
-      // Lógica para intentar rotar la pantalla en móviles al entrar en Fullscreen
+      // Lógica para girar pantalla (Intacta)
       player.on('enterfullscreen', () => {
         if (window.screen.orientation && window.screen.orientation.lock) {
-          window.screen.orientation.lock('landscape').catch((err) => {
-            console.warn('No se pudo bloquear la orientación:', err);
-          });
+          window.screen.orientation.lock('landscape').catch(() => {});
         }
       });
 
@@ -94,6 +91,34 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
     );
   }
 
+  // 🔥 CSS inyectado de forma SEGURA para que no crashee React
+  const customStyles = `
+    /* --- DESKTOP (Intacto) --- */
+    .plyr { width: 100%; height: 100%; }
+    .plyr video { object-fit: contain; }
+    
+    .plyr__controls [data-plyr="rewind"] { order: 1; margin-right: 5px; }
+    .plyr__controls [data-plyr="play"] { order: 2; }
+    .plyr__controls [data-plyr="fast-forward"] { order: 3; margin-left: 5px; }
+
+    .plyr--fullscreen-active video {
+      object-fit: contain !important; 
+      background-color: black;
+    }
+
+    /* --- MOBILE: Lógica Separada --- */
+    @media (max-width: 768px) {
+      .plyr--fullscreen-active video {
+        /* Forzamos a que ocupe casi todo, pero dejando un ligerito margen a los lados */
+        width: 96vw !important; 
+        height: 100vh !important;
+        object-fit: contain !important;
+        margin: 0 auto !important; /* Centra el video en la pantalla */
+        display: block;
+      }
+    }
+  `;
+
   return (
     <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-white/5 custom-plyr-wrapper">
       <video
@@ -102,57 +127,8 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
         poster={poster}
         title={title}
       />
-
-      <style>{`
-        /* --- ESTILOS BASE DE PLYR --- */
-        
-        /* Aseguramos que la caja de Plyr ocupe el contenedor aspect-video */
-        .plyr {
-          width: 100%;
-          height: 100%;
-        }
-
-        /* Comportamiento del video en estado normal (Desktop y Mobile) */
-        .plyr video {
-          object-fit: contain; /* Nunca recorta, muestra bandas negras si no encaja la proporción */
-        }
-
-        /* --- CONTROLES: ADELANTAR / REBOBINAR AL LADO DEL PLAY --- */
-        
-        /* Ocultar los botones de salto de la barra inferior por defecto si queremos */
-        /* .plyr__controls [data-plyr="rewind"], .plyr__controls [data-plyr="fast-forward"] { display: none; } */
-        
-        /* Pero en tu código pedías ordenarlos, así que los acomodamos en la barra inferior: */
-        .plyr__controls [data-plyr="rewind"] { order: 1; margin-right: 5px; }
-        .plyr__controls [data-plyr="play"] { order: 2; }
-        .plyr__controls [data-plyr="fast-forward"] { order: 3; margin-left: 5px; }
-
-
-        /* --- LÓGICA FULLSCREEN (DESKTOP Y MOBILE) --- */
-
-        /* Cuando está en fullscreen, forzamos que cubra la pantalla sin recortar los lados vitales, 
-           pero llenando lo más posible (contain es seguro, cover recorta) */
-        .plyr--fullscreen-active video {
-          object-fit: contain !important; 
-          width: 100vw !important;
-          height: 100vh !important;
-          background-color: black;
-        }
-
-        /* Ajustes específicos para iOS para evitar márgenes blancos o controles superpuestos */
-        .plyr--ios.plyr--fullscreen-active video {
-           object-fit: contain !important;
-        }
-
-        /* Si el dispositivo se pone en landscape físicamente, maximizamos el contenedor */
-        @media (orientation: landscape) and (max-width: 900px) {
-           .custom-plyr-wrapper {
-              /* Quitamos los bordes redondeados si estamos en landscape móvil */
-              border-radius: 0;
-              border: none;
-           }
-        }
-      `}</style>
+      {/* Usamos dangerouslySetInnerHTML para evitar que el compilador se rompa */}
+      <style dangerouslySetInnerHTML={{ __html: customStyles }} />
     </div>
   );
 }
