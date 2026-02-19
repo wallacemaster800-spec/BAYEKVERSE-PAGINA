@@ -91,7 +91,7 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
     );
   }
 
-  // 🔥 CSS inyectado de forma SEGURA para que no crashee React
+  // 🔥 CSS inyectado de forma SEGURA
   const customStyles = `
     /* --- DESKTOP (Intacto) --- */
     .plyr { width: 100%; height: 100%; }
@@ -106,27 +106,21 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
       background-color: black;
     }
 
-    /* --- MOBILE: Lógica Separada (Estilo YouTube) --- */
+    /* --- MOBILE: FULL COVER CON ZOOM INVERSO --- */
     @media (max-width: 768px) {
       .plyr--fullscreen-active video {
-        /* Clave: 100% de ancho y alto, con 'contain'.
-           Esto asegura que NUNCA se recorte la imagen. 
-           Si la pantalla es más "larga" que el video (celulares modernos), 
-           se verán franjas negras a los lados, como en Netflix.
-        */
         width: 100vw !important; 
         height: 100vh !important;
-        object-fit: contain !important; 
+        object-fit: cover !important; 
+        
+        /* 🔥 ACÁ ESTÁ LA MAGIA: 
+           0.95 lo achica un 5% para recuperar los márgenes cortados. 
+           Si lo querés achicar un poco más, probá con 0.90.
+           Si lo querés más grande, probá con 0.98. */
+        transform: scale(0.95) !important;
+        
         margin: 0 !important;
         padding: 0 !important;
-      }
-      
-      /* Ocultar barra de estado/notch en iOS si es posible */
-      .plyr--fullscreen-active {
-        padding-top: env(safe-area-inset-top);
-        padding-bottom: env(safe-area-inset-bottom);
-        padding-left: env(safe-area-inset-left);
-        padding-right: env(safe-area-inset-right);
       }
     }
   `;
@@ -139,7 +133,6 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
         poster={poster}
         title={title}
       />
-      {/* Usamos dangerouslySetInnerHTML para evitar que el compilador se rompa */}
       <style dangerouslySetInnerHTML={{ __html: customStyles }} />
     </div>
   );
