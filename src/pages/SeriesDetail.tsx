@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, Navigate } from 'react-router-dom'; // <--- ESTO ESTABA DANDO ERROR
+import { useParams, Navigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Layout } from '@/components/layout/Layout';
@@ -30,10 +30,12 @@ export default function SeriesDetail() {
   const playerRef = useRef<HTMLDivElement>(null);
   const { data: allEpisodes } = useAllCapitulos(activeTab === 'episodios' ? (series as any)?.id || '' : '');
 
+  // Efecto para scroll al cambiar de serie
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [slug]);
 
+  // Verificar estado de compra en Supabase
   useEffect(() => {
     const checkPurchase = async () => {
       if (!session?.user?.id || !(series as any)?.id) return;
@@ -50,6 +52,7 @@ export default function SeriesDetail() {
     checkPurchase();
   }, [session, series]);
 
+  // Scroll suave al seleccionar episodio
   useEffect(() => {
     if (selectedEpisode && playerRef.current) {
       setTimeout(() => {
@@ -58,6 +61,7 @@ export default function SeriesDetail() {
     }
   }, [selectedEpisode]);
 
+  // Manejo de compra Global (Gumroad)
   const handlePurchase = () => {
     if (!session) return alert("Debes iniciar sesión para comprar.");
     const gumroadUrl = (series as any)?.lemon_url; 
@@ -67,6 +71,7 @@ export default function SeriesDetail() {
     window.location.href = `${gumroadUrl}${separator}user_id=${session.user.id}&series_id=${(series as any).id}`;
   };
 
+  // Manejo de compra Argentina (Mercado Pago)
   const handleMPPurchase = () => {
     if (!session) return alert("Debes iniciar sesión para comprar.");
     const mpUrl = (series as any)?.mp_url; 
@@ -74,11 +79,21 @@ export default function SeriesDetail() {
 
     const separator = mpUrl.includes('?') ? '&' : '?';
     const finalUrl = `${mpUrl}${separator}external_reference=${session.user.id}|${(series as any).id}`;
+    
+    console.log("Redirigiendo a Mercado Pago:", finalUrl);
     window.location.href = finalUrl;
   };
 
   if (error) return <Navigate to="/" />;
-  if (isLoading || !series) return <Layout><div className="flex items-center justify-center min-h-screen"><div className="animate-pulse h-12 w-12 bg-muted rounded-full" /></div></Layout>;
+  if (isLoading || !series) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="aspect-video max-w-4xl mx-auto skeleton-shimmer rounded-lg" />
+        </div>
+      </Layout>
+    );
+  }
 
   const isEpisodeLocked = selectedEpisode?.es_pago && !hasPurchased;
 
@@ -102,22 +117,23 @@ export default function SeriesDetail() {
                 className="max-w-5xl mx-auto overflow-hidden"
               >
                 {isEpisodeLocked ? (
-                  <div className="relative w-full aspect-video bg-black rounded-xl border-2 border-amber-500/30 shadow-2xl flex flex-col items-center justify-center p-6 text-center overflow-hidden">
+                  /* EL CAMBIO CLAVE: aspect-auto y min-h para móviles */
+                  <div className="relative w-full aspect-auto min-h-[500px] md:aspect-video bg-black rounded-xl border-2 border-amber-500/30 shadow-2xl flex flex-col items-center justify-center p-6 text-center overflow-hidden">
                     <div className="absolute inset-0 bg-[url('https://res.cloudinary.com/dpv3kpsmt/image/upload/v1739818821/bayekverse_logo_vzr0r8.png')] bg-cover bg-center opacity-10 blur-sm mix-blend-screen" />
                     
                     <ShieldAlert className="w-16 h-16 text-amber-500 mb-4 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)] z-10" />
-                    <h2 className="text-3xl font-display font-bold text-white mb-2 z-10">Contenido Premium</h2>
-                    <p className="text-muted-foreground mb-8 max-w-lg z-10 text-sm md:text-base">
-                      Acceso restringido. Elige tu zona para desbloquear <strong className="text-amber-500">{(series as any).titulo}</strong> y todos los episodios premium.
+                    <h2 className="text-2xl md:text-3xl font-display font-bold text-white mb-2 z-10 uppercase italic">Contenido Clasificado</h2>
+                    <p className="text-muted-foreground mb-8 max-w-lg z-10 text-xs md:text-sm leading-relaxed">
+                      Esta transmisión requiere una llave de acceso Premium. Adquiere el pase completo para desbloquear <strong className="text-amber-500">{(series as any).titulo}</strong> y todos sus archivos secretos.
                     </p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md z-10">
                       <Button 
                         onClick={handleMPPurchase}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-16 flex flex-col items-center justify-center transition-all hover:scale-105"
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-16 flex flex-col items-center justify-center transition-all hover:scale-105 shadow-lg"
                       >
-                        <span className="text-[10px] uppercase opacity-70 tracking-tighter">Argentina</span>
-                        <span className="flex items-center gap-2"><CreditCard className="w-4 h-4" /> Pagar en Pesos</span>
+                        <span className="text-[10px] uppercase opacity-70 tracking-tighter font-black">Argentina</span>
+                        <span className="flex items-center gap-2"><CreditCard className="w-4 h-4" /> PAGAR EN PESOS</span>
                       </Button>
 
                       <Button 
@@ -125,16 +141,20 @@ export default function SeriesDetail() {
                         variant="outline"
                         className="border-amber-500 text-amber-500 hover:bg-amber-500/10 h-16 flex flex-col items-center justify-center transition-all hover:scale-105"
                       >
-                        <span className="text-[10px] uppercase opacity-70 tracking-tighter">Resto del Mundo</span>
-                        <span className="flex items-center gap-2"><Globe className="w-4 h-4" /> Global</span>
+                        <span className="text-[10px] uppercase opacity-70 tracking-tighter font-black">Resto del Mundo</span>
+                        <span className="flex items-center gap-2"><Globe className="w-4 h-4" /> GLOBAL (USD)</span>
                       </Button>
                     </div>
                   </div>
                 ) : (
-                  <VideoPlayer src={selectedEpisode.video_url || ''} title={selectedEpisode.titulo} poster={selectedEpisode.miniatura_url} />
+                  <VideoPlayer 
+                    src={selectedEpisode.video_url || ''} 
+                    title={selectedEpisode.titulo} 
+                    poster={selectedEpisode.miniatura_url} 
+                  />
                 )}
 
-                <div className="mt-3 px-1">
+                <div className="mt-4 px-1">
                   <h2 className="text-lg font-semibold flex items-center gap-2">
                     T{selectedEpisode.temporada || 1} · Ep. {selectedEpisode.orden}: {selectedEpisode.titulo}
                     {selectedEpisode.es_pago && <span className="text-[10px] bg-amber-500 text-black px-2 py-0.5 rounded uppercase font-bold tracking-wider">Premium</span>}
@@ -142,44 +162,68 @@ export default function SeriesDetail() {
                 </div>
 
                 {allEpisodes && (
-                  <EpisodeNavigation currentEpisode={selectedEpisode} allEpisodes={allEpisodes as any} onNavigate={setSelectedEpisode} />
+                  <EpisodeNavigation 
+                    currentEpisode={selectedEpisode} 
+                    allEpisodes={allEpisodes as any} 
+                    onNavigate={setSelectedEpisode} 
+                  />
                 )}
               </motion.div>
             )}
           </AnimatePresence>
 
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="max-w-5xl mx-auto mb-8">
-            <div className="flex items-start gap-4">
+          {/* Información de la Serie */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="max-w-5xl mx-auto mb-10">
+            <div className="flex items-start gap-5">
               {(series as any).portada_url && (
                 <OptimizedImage 
                   src={(series as any).portada_url} 
                   alt={(series as any).titulo} 
                   size="thumbnail" 
-                  className="w-20 h-28 rounded-lg flex-shrink-0 hidden sm:block object-cover" 
+                  className="w-24 h-36 rounded-xl flex-shrink-0 hidden sm:block object-cover border border-white/10 shadow-xl" 
                 />
               )}
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-2xl md:text-3xl font-display font-bold uppercase tracking-tighter italic">{(series as any).titulo}</h1>
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <h1 className="text-3xl md:text-4xl font-display font-bold uppercase tracking-tighter italic text-primary">{(series as any).titulo}</h1>
                   {(series as any).estado === 'En emisión' ? <span className="badge-emision">En emisión</span> : <span className="badge-finalizada">Finalizada</span>}
                 </div>
-                {(series as any).descripcion && <p className="text-muted-foreground">{(series as any).descripcion}</p>}
+                {(series as any).descripcion && <p className="text-muted-foreground text-sm md:text-base leading-relaxed max-w-3xl">{(series as any).descripcion}</p>}
               </div>
             </div>
           </motion.div>
 
+          {/* Navegación por Pestañas */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="max-w-5xl mx-auto">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-              <TabsList className="w-full justify-start bg-card border border-border mb-6">
-                <TabsTrigger value="episodios" className="tab-cinematic flex items-center gap-2"><Play className="w-4 h-4" /> Episodios</TabsTrigger>
-                <TabsTrigger value="lore" className="tab-cinematic flex items-center gap-2"><BookOpen className="w-4 h-4" /> Lore</TabsTrigger>
-                <TabsTrigger value="galeria" className="tab-cinematic flex items-center gap-2"><Image className="w-4 h-4" /> Galería</TabsTrigger>
+              <TabsList className="w-full justify-start bg-card/50 backdrop-blur-sm border border-border mb-8 p-1">
+                <TabsTrigger value="episodios" className="tab-cinematic flex items-center gap-2 px-6"><Play className="w-4 h-4" /> Episodios</TabsTrigger>
+                <TabsTrigger value="lore" className="tab-cinematic flex items-center gap-2 px-6"><BookOpen className="w-4 h-4" /> Lore</TabsTrigger>
+                <TabsTrigger value="galeria" className="tab-cinematic flex items-center gap-2 px-6"><Image className="w-4 h-4" /> Galería</TabsTrigger>
               </TabsList>
-              <TabsContent value="episodios">
-                {allEpisodes && <SeasonTabs episodes={allEpisodes as any} onSelectEpisode={setSelectedEpisode} selectedEpisodeId={selectedEpisode?.id} hasPurchased={hasPurchased} />}
+
+              <TabsContent value="episodios" className="mt-0 focus-visible:outline-none">
+                {allEpisodes ? (
+                  <SeasonTabs 
+                    episodes={allEpisodes as any} 
+                    onSelectEpisode={setSelectedEpisode} 
+                    selectedEpisodeId={selectedEpisode?.id} 
+                    hasPurchased={hasPurchased} 
+                  />
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {Array.from({ length: 4 }).map((_, i) => <div key={i} className="aspect-video skeleton-shimmer rounded-lg" /> )}
+                  </div>
+                )}
               </TabsContent>
-              <TabsContent value="lore"><LoreViewer seriesId={(series as any).id} isActive={activeTab === 'lore'} /></TabsContent>
-              <TabsContent value="galeria"><GalleryMosaic seriesId={(series as any).id} isActive={activeTab === 'galeria'} /></TabsContent>
+              
+              <TabsContent value="lore" className="mt-0 focus-visible:outline-none">
+                <LoreViewer seriesId={(series as any).id} isActive={activeTab === 'lore'} />
+              </TabsContent>
+              
+              <TabsContent value="galeria" className="mt-0 focus-visible:outline-none">
+                <GalleryMosaic seriesId={(series as any).id} isActive={activeTab === 'galeria'} />
+              </TabsContent>
             </Tabs>
           </motion.div>
         </div>
