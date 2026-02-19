@@ -142,7 +142,7 @@ export default function SeriesDetail() {
                         className="border-amber-500 text-amber-500 hover:bg-amber-500/10 h-16 flex flex-col items-center justify-center transition-all hover:scale-105"
                       >
                         <span className="text-[10px] uppercase opacity-70 tracking-tighter font-black">Resto del Mundo</span>
-                        <span className="flex items-center gap-2"><Globe className="w-4 h-4" /> GLOBAL (USD)</span>
+                        <span className="flex items-center gap-2"><Globe className="w-4 h-4" /> GLOBAL</span>
                       </Button>
                     </div>
                   </div>
