@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import Hls from 'hls.js';
+// @ts-ignore
 import Plyr from 'plyr';
 import 'plyr/dist/plyr.css';
 
@@ -51,14 +52,14 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
 
       // Lógica para girar pantalla automática (Android)
       player.on('enterfullscreen', () => {
-        if (window.screen.orientation && window.screen.orientation.lock) {
-          window.screen.orientation.lock('landscape').catch(() => {});
+        if (window.screen.orientation && (window.screen.orientation as any).lock) {
+          (window.screen.orientation as any).lock('landscape').catch(() => {});
         }
       });
 
       player.on('exitfullscreen', () => {
-        if (window.screen.orientation && window.screen.orientation.unlock) {
-          window.screen.orientation.unlock();
+        if (window.screen.orientation && (window.screen.orientation as any).unlock) {
+          (window.screen.orientation as any).unlock();
         }
       });
     };
@@ -130,11 +131,11 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
         border-radius: 0 !important;
       }
       
-      /* Forzamos el video a COVER */
+      /* Forzamos el video a su formato normal (contain) */
       .plyr video {
         width: 100vw !important;
         height: 100dvh !important;
-        object-fit: cover !important;
+        object-fit: contain !important;
       }
     }
 
@@ -142,7 +143,7 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
     .plyr--fullscreen-active, .plyr--fullscreen-active .plyr__video-wrapper, .plyr--fullscreen-active video {
       width: 100vw !important;
       height: 100vh !important;
-      object-fit: cover !important; 
+      object-fit: contain !important; 
     }
   `;
 
