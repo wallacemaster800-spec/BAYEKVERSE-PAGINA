@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { lazy, Suspense, useEffect } from "react";
 import { queryClient } from "@/lib/queryClient";
 import { supabase } from "@/integrations/supabase/client";
+import TikTokDetector from "./components/TikTokDetector"; // 🔥 Importamos el detector
 
 // Lazy pages
 const Index = lazy(() => import("./pages/Index"));
@@ -20,7 +21,7 @@ const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const SeriesEditor = lazy(() => import("./pages/admin/SeriesEditor"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-// 🔥 PÁGINAS LEGALES (Asegúrate de que la ruta coincida con donde guardaste los archivos)
+// 🔥 PÁGINAS LEGALES
 const Terminos = lazy(() => import("./pages/terminos"));
 const Privacidad = lazy(() => import("./pages/privacidad"));
 const Reembolsos = lazy(() => import("./pages/reembolsos"));
@@ -72,6 +73,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <TikTokDetector /> {/* 🔥 El detector vigila la entrada desde TikTok */}
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                   <Route path="/" element={<Index />} />
