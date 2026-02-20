@@ -77,7 +77,7 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
       if (hls) hls.destroy();
       if (player) player.destroy();
     };
-  }, [src, ytId]);
+  }, [src, ytId]); // El key en el contenedor hace que este useEffect sea seguro.
 
   if (ytId) {
     return (
@@ -101,10 +101,28 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
     .plyr__controls [data-plyr="play"] { order: 2; }
     .plyr__controls [data-plyr="fast-forward"] { order: 3; margin-left: 5px; }
 
-    /* --- MOBILE: TU TRUCO TAILWIND RESTAURADO + PLYR FORCE COVER --- */
+    /* --- MOBILE: OCULTAR VOLUMEN --- */
+    @media (max-width: 768px) {
+      /* Oculta la barra de volumen en móviles para no tapar la barra de progreso */
+      .plyr__volume { display: none !important; }
+    }
+
+    /* --- MOBILE: LANDSCAPE FULLSCREEN --- */
     @media (orientation: landscape) and (max-width: 900px) {
       body { overflow: hidden !important; }
       
+      /* Reemplazo de las clases landscape: de tailwind para que SOLO actúe en móviles */
+      .custom-plyr-wrapper {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 9999 !important;
+        width: 100vw !important;
+        height: 100dvh !important;
+        aspect-ratio: auto !important;
+        border-radius: 0 !important;
+        border: none !important;
+      }
+
       /* Forzamos a Plyr y sus envoltorios a ocupar el 100% real de la pantalla */
       .plyr, .plyr__video-wrapper {
         width: 100vw !important;
@@ -129,9 +147,11 @@ export function VideoPlayer({ src, title = 'Video', poster }: VideoPlayerProps) 
   `;
 
   return (
-    /* 🔥 VOLVIERON TUS CLASES DE LANDSCAPE FIXED AL CONTENEDOR PADRE */
-    <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-white/5 custom-plyr-wrapper
-                    landscape:fixed landscape:inset-0 landscape:z-[9999] landscape:w-screen landscape:h-[100dvh] landscape:aspect-auto landscape:rounded-none landscape:border-none">
+    /* 🔥 key={src} obliga a React a montar un HTML desde cero al cambiar de video */
+    <div 
+      key={src} 
+      className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-white/5 custom-plyr-wrapper"
+    >
       <video
         ref={videoRef}
         playsInline
