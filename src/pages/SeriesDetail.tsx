@@ -164,8 +164,8 @@ export default function SeriesDetail() {
                         <span className="flex items-center gap-2"><CreditCard className="w-4 h-4" /> PAGAR EN PESOS</span>
                       </Button>
                       <Button onClick={handlePurchase} variant="outline" className="border-amber-500 text-amber-500 hover:bg-amber-500/10 h-16 flex flex-col items-center justify-center">
-                        <span className="text-[10px] uppercase opacity-70 font-black">Global</span>
-                        <span className="flex items-center gap-2"><Globe className="w-4 h-4" /> PAY IN USD</span>
+                        <span className="text-[10px] uppercase opacity-70 font-black">Resto del mundo</span>
+                        <span className="flex items-center gap-2"><Globe className="w-4 h-4" /> Otra moneda</span>
                       </Button>
                     </div>
                   </div>
